@@ -1,0 +1,124 @@
+Digital Blood Pressure Tracker – Pitch Deck
+Slide 1: Cover Slide
+
+Title: Digital Blood Pressure Tracker
+
+Subtitle: Monitoring Health and Promoting Well-Being (SDG 3)
+
+Author: Kahsay Kiross Meresa
+
+Date: August 31, 2025
+
+Visuals: Healthy lifestyle / heart illustration / blood pressure monitor
+
+Slide 2: Problem Statement
+
+Many people struggle to monitor their blood pressure regularly.
+
+Uncontrolled blood pressure leads to cardiovascular diseases and other health issues.
+
+Manual tracking is inaccurate and inconvenient.
+
+Visual: Infographic showing stats about hypertension prevalence.
+
+Slide 3: Solution
+
+Digital Blood Pressure Tracker: a web-based application to monitor and track blood pressure readings.
+
+Enables users to record readings, classify results, and visualize trends over time.
+
+Visual: Mockup of tracker.html with a chart or table of readings.
+
+Slide 4: Key Features
+
+User registration & secure login
+
+Add and manage blood pressure readings
+
+Blood pressure classification: Normal, Elevated, High
+
+Trend visualization with charts
+
+Easy-to-use, accessible anywhere
+
+Visual: Icon-based feature list
+
+Slide 5: SDG Alignment
+
+SDG 3 – Good Health and Well-Being
+
+Promotes preventive healthcare and self-monitoring.
+
+Encourages users to adopt healthy habits and regular monitoring.
+
+Visual: SDG 3 logo or health-related icons
+
+Slide 6: Technology Stack
+
+Frontend: HTML, CSS, JavaScript
+
+Backend: PHP
+
+Database: MySQL
+
+Deployment: Local (XAMPP) or live server (cPanel hosting)
+
+Visual: Tech stack icons or flowchart showing front-end → back-end → database
+
+Slide 7: Project Architecture
+
+Diagram: Show how user interacts with frontend → JS → PHP → Database.
+
+Include user registration/login, reading submission, data visualization, data storage.
+
+Slide 8: User Journey
+
+Register → Login → Add Reading → View Chart → Logout
+
+Visual: Flow diagram of the steps with icons for each stage
+
+Slide 9: Demo / Screenshots
+
+Show login page, registration page, tracker page with chart
+
+Optional: include short animation of adding readings and viewing trend
+
+Slide 10: Benefits & Impact
+
+Empowers individuals to take control of their health
+
+Supports preventive care and awareness
+
+Reduces risks associated with undiagnosed hypertension
+
+Can integrate with wearable devices and mobile apps in future
+
+Visual: Icons showing health, growth, analytics
+
+Slide 11: Roadmap / Future Enhancements
+
+Mobile app version for Android/iOS
+
+Integration with wearable devices for real-time monitoring
+
+Data analytics and predictive alerts
+
+Multi-language support for wider reach
+
+Cloud storage for personal health history backup
+
+Slide 12: Call to Action / Closing
+
+“Empowering users to monitor their health anytime, anywhere.”
+
+Invite partners, investors, or collaborators
+
+Visual: Heartbeat icon or happy user illustration
+
+Tips for Visual Design
+
+Use a clean, minimalistic theme with health-related colors (green, blue, red).
+
+Include icons for features, charts for trends, and screenshots of the app.
+
+Keep text concise and readable, one key point per slide.
