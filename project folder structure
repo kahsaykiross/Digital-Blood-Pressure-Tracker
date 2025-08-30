@@ -1,0 +1,18 @@
+BloodPressureTracker/
+│
+├─ index.html          (Redirects to login.html)
+├─ login.html
+├─ register.html
+├─ tracker.html
+│
+├─ style.css
+├─ register.js
+├─ login.js
+├─ tracker.js
+│
+├─ register.php
+├─ login.php
+├─ save_reading.php
+│
+└─ sql/
+   └─ BloodPressureDB.sql
