@@ -1,0 +1,125 @@
+Digital Blood Pressure Tracker – Deployment Script/Guide
+Step 1 – Install XAMPP (Local Deployment)
+
+Visual: Show XAMPP download page
+Script:
+
+Go to https://www.apachefriends.org/index.html
+
+Download the latest version for your OS.
+
+Run the installer and finish installation.
+
+Open XAMPP Control Panel and start Apache and MySQL.
+
+Verify by visiting: http://localhost
+ – You should see the XAMPP welcome page.
+
+Step 2 – Set Up Database
+
+Visual: Open phpMyAdmin in browser
+Script:
+
+Go to http://localhost/phpmyadmin
+
+Click New, enter database name: BloodPressureDB
+
+Click Import, select BloodPressureDB.sql from the project folder
+
+Click Go and verify tables users and bp_readings are created
+
+Step 3 – Copy Project Files
+
+Visual: Show project folder in file explorer
+Script:
+
+Navigate to C:\xampp\htdocs\
+
+Create a folder: BloodPressureTracker
+
+Copy all HTML, CSS, JS, PHP files into this folder
+
+Step 4 – Configure PHP Database Connection
+
+Visual: Open register.php in VS Code
+Script:
+
+Edit PHP files (register.php, login.php, save_reading.php)
+
+Ensure connection is:
+
+$conn = new mysqli("localhost", "root", "", "BloodPressureDB");
+
+
+Note: For XAMPP, username=root, password=leave blank
+
+Step 5 – Run the Project Locally
+
+Visual: Open browser, type URL
+Script:
+
+Go to: http://localhost/BloodPressureTracker/register.html
+
+Register a new user
+
+Login to login.html
+
+Enter blood pressure readings and verify chart updates
+
+Logout and test session handling
+
+Step 6 – Deploy on Live Server (cPanel Hosting)
+
+Visual: Show cPanel dashboard
+Script:
+
+Use FTP (FileZilla) or File Manager to upload the BloodPressureTracker folder to public_html
+
+Go to cPanel → MySQL Databases
+
+Create a database, a user, assign privileges
+
+Open phpMyAdmin, select database, import BloodPressureDB.sql
+
+Edit PHP files to update connection:
+
+$conn = new mysqli("localhost", "your_db_user", "your_db_password", "your_db_name");
+
+
+Access the app via your domain:
+
+https://yourdomain.com/BloodPressureTracker/register.html
+
+Step 7 – Enable HTTPS
+
+Visual: cPanel SSL panel
+Script:
+
+Go to cPanel → SSL/TLS → Let’s Encrypt
+
+Enable SSL for your domain/subdomain
+
+Access the site via https:// to secure sensitive health data
+
+Step 8 – Testing
+
+Visual: Browser showing tracker, charts, logout/login
+Script:
+
+Register multiple users, test login/logout
+
+Add readings to verify charts per user
+
+Test blood pressure classification (Normal / Elevated / High)
+
+Check database for proper records
+
+✅ Best Practices
+
+Use strong passwords for MySQL and users
+
+Backup the database regularly
+
+Sanitize inputs on PHP side to prevent SQL injection
+
+Consider adding email verification for users
