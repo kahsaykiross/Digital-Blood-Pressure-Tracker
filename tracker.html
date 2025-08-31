@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tracker - Blood Pressure Tracker</title>
+<link rel="stylesheet" href="style.css">
+<script src="tracker.js" defer></script>
+</head>
+<body>
+<h2>Blood Pressure Tracker</h2>
+<div>
+  <button id="logoutBtn">Logout</button>
+</div>
+<form id="bpForm">
+  <input type="number" id="systolic" placeholder="Systolic" required>
+  <input type="number" id="diastolic" placeholder="Diastolic" required>
+  <button type="submit">Add Reading</button>
+</form>
+<h3>Your Readings</h3>
+<table id="bpTable">
+  <tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>
+</table>
+</body>
+</html>

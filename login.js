@@ -1,22 +1,13 @@
-document.getElementById("loginForm").addEventListener("submit", function(e){
+document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
-    fetch("login.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success){
-            localStorage.setItem("user_id", data.user_id);
-            window.location.href = "tracker.html";
-        } else {
-            document.getElementById("loginMessage").innerText = data.message;
-        }
-    })
-    .catch(err => console.error(err));
+    let username = document.getElementById('username').value;
+    let password = document.getElementById('password').value;
+    let users = JSON.parse(localStorage.getItem('users')) || [];
+    let user = users.find(u => u.username === username && u.password === password);
+    if(user){
+        localStorage.setItem('currentUser', username);
+        window.location.href = 'tracker.html';
+    } else {
+        document.getElementById('loginMsg').innerText = 'Invalid credentials';
+    }
 });
