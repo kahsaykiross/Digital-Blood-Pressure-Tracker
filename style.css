@@ -1,5 +1,137 @@
-body { font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; }
-input { margin: 5px 0; padding: 8px; width: 100%; }
-button { padding: 8px 12px; margin: 5px 0; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+/* ==============================
+   Global Styles
+   ============================== */
+body {
+  font-family: Arial, sans-serif;
+  max-width: 500px;
+  margin: auto;
+  padding: 20px;
+}
+
+input {
+  margin: 5px 0;
+  padding: 8px;
+  width: 100%;
+}
+
+button {
+  padding: 8px 12px;
+  margin: 5px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+/* ==============================
+   Doctoral Advice Section
+   ============================== */
+#bp-advice {
+  background-color: #f9f9f9;
+  padding: 20px;
+  margin-top: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#bp-advice h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#bp-advice h3 {
+  color: #16a085;
+  margin-top: 15px;
+}
+
+#bp-advice ul {
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+#bp-advice ul li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+#bp-advice p em {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Card-style for each recommendation block */
+#bp-advice h3 + ul {
+  background-color: #ffffff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 10px;
+}
+
+/* ==============================
+   Badges for each category
+   ============================== */
+.badge {
+  display: inline-block;
+  font-size: 1.2em;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  color: #fff;
+  margin-right: 10px;
+}
+
+/* Specific colors for each badge */
+.badge.diet { background-color: #e67e22; }       /* orange */
+.badge.exercise { background-color: #3498db; }   /* blue */
+.badge.weight { background-color: #9b59b6; }     /* purple */
+.badge.stress { background-color: #1abc9c; }     /* teal */
+.badge.habits { background-color: #e74c3c; }     /* red */
+.badge.monitor { background-color: #f1c40f; }    /* yellow */
+
+/* ==============================
+   Responsive Styles
+   ============================== */
+@media (max-width: 600px) {
+  body {
+    max-width: 100%;
+    padding: 15px;
+  }
+
+  #bp-advice {
+    padding: 15px;
+    margin-top: 20px;
+  }
+
+  #bp-advice h2 {
+    font-size: 1.5em;
+  }
+
+  #bp-advice h3 {
+    font-size: 1.2em;
+  }
+
+  /* Make badges smaller on mobile */
+  .badge {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 1em;
+  }
+
+  /* Reduce padding inside card-like ul blocks */
+  #bp-advice h3 + ul {
+    padding: 8px 12px;
+  }
+}
