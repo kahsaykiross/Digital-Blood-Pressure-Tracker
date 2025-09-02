@@ -41,6 +41,7 @@
   <form id="registerForm">
     <input id="regUser" placeholder="Username" required>
     <input type="password" id="regPass" placeholder="Password" required>
+    <label><input type="checkbox" id="regAdmin"> Admin</label>
     <button type="submit">Register</button>
   </form>
 </section>
@@ -63,6 +64,7 @@
 <section id="adminSection">
   <h3>Admin Panel</h3>
   <div id="adminSummary" style="margin-bottom:10px;"></div>
+  <canvas id="adminPieChart" width="400" height="200"></canvas>
   <table id="adminTable">
     <tr><th>User</th><th>Status</th><th>Action</th></tr>
   </table>
@@ -83,7 +85,7 @@ window.onload = function() {
   let users = JSON.parse(localStorage.getItem("users") || "[]");
   let records = JSON.parse(localStorage.getItem("records") || "{}");
   let currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
-  let chart;
+  let chart, adminPieChart;
 
   function saveData() {
     localStorage.setItem("users", JSON.stringify(users));
@@ -91,7 +93,6 @@ window.onload = function() {
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
   }
 
-  // --- BP Category Functions ---
   function getBPCategory(s,d){
     if(s>=180 || d>=120) return "Hypertensive Crisis";
     if(s>=140 || d>=90) return "Hypertension Stage 2";
@@ -102,16 +103,16 @@ window.onload = function() {
 
   function getCategoryColor(category){
     switch(category){
-      case "Normal": return "#28a745"; // green
-      case "Elevated": return "#ffc107"; // yellow
-      case "Hypertension Stage 1": return "#fd7e14"; // orange
-      case "Hypertension Stage 2": return "#dc3545"; // red
-      case "Hypertensive Crisis": return "#800000"; // dark red
+      case "Normal": return "#28a745";
+      case "Elevated": return "#ffc107";
+      case "Hypertension Stage 1": return "#fd7e14";
+      case "Hypertension Stage 2": return "#dc3545";
+      case "Hypertensive Crisis": return "#800000";
       default: return "#000";
     }
   }
 
-  // --- Navigation ---
+  // Navigation
   window.showTab = function(id){
     document.querySelectorAll("section").forEach(s=>s.style.display="none");
     document.getElementById(id).style.display="block";
@@ -120,27 +121,28 @@ window.onload = function() {
     if(id==="publicSection") renderPublic();
   };
 
-  window.logout = function(){
+  window.logout=function(){
     currentUser=null;
     saveData();
     showTab("loginSection");
   };
 
-  // --- Register ---
+  // Register
   document.getElementById("registerForm").onsubmit = e=>{
     e.preventDefault();
     let u=document.getElementById("regUser").value.trim();
     let p=document.getElementById("regPass").value;
-    if(!u || !p) return alert("Fill all fields");
+    let isAdmin=document.getElementById("regAdmin").checked;
+    if(!u||!p) return alert("Fill all fields");
     if(users.find(x=>x.username===u)) return alert("User exists");
-    users.push({username:u,password:p,blocked:false});
+    users.push({username:u,password:p,blocked:false,isAdmin:isAdmin});
     records[u]=[];
     saveData();
     alert("Registered!");
     document.getElementById("registerForm").reset();
   };
 
-  // --- Login ---
+  // Login
   document.getElementById("loginForm").onsubmit = e=>{
     e.preventDefault();
     let u=document.getElementById("loginUser").value.trim();
@@ -151,25 +153,27 @@ window.onload = function() {
     currentUser=user.username;
     saveData();
     document.getElementById("loginForm").reset();
-    showTab("trackerSection");
+    if(user.isAdmin) showTab("adminSection");
+    else showTab("trackerSection");
   };
 
-  // --- Record BP ---
+  // Record BP
   document.getElementById("bpForm").onsubmit = e=>{
     e.preventDefault();
     if(!currentUser) return alert("Login first");
     let s=+document.getElementById("systolic").value;
     let d=+document.getElementById("diastolic").value;
-    if(!s || !d) return alert("Enter valid values");
+    if(!s||!d) return alert("Enter valid values");
     let category=getBPCategory(s,d);
     let rec={date:new Date().toLocaleString(),systolic:s,diastolic:d,category:category};
     records[currentUser].push(rec);
     saveData();
     document.getElementById("bpForm").reset();
     renderTable();
+    renderPublicInline(); // update public section inline
   };
 
-  // --- Tracker Table & Chart ---
+  // Tracker Table & Chart
   function renderTable(){
     let t=document.getElementById("bpTable");
     t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th><th>Action</th></tr>";
@@ -215,23 +219,23 @@ window.onload = function() {
     records[currentUser].splice(i,1);
     saveData();
     renderTable();
+    renderPublicInline();
   };
 
-  // --- Admin Panel ---
+  // Admin Panel
   function renderAdmin(){
     let t=document.getElementById("adminTable");
-    t.innerHTML = "<tr><th>User</th><th>Status</th><th>Action</th></tr>";
+    t.innerHTML="<tr><th>User</th><th>Status</th><th>Action</th></tr>";
 
-    // Global summary
-    let counts = {Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
+    let counts={Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
     let total=0;
-    users.forEach(u => {
-      (records[u.username] || []).forEach(r => {
-        counts[r.category] = (counts[r.category] || 0) + 1;
+    users.forEach(u=>{
+      (records[u.username]||[]).forEach(r=>{
+        counts[r.category]=(counts[r.category]||0)+1;
         total++;
       });
     });
-    document.getElementById("adminSummary").innerHTML = `
+    document.getElementById("adminSummary").innerHTML=`
       <b>Total Records:</b> ${total} &nbsp;
       <b>Normal:</b> ${counts["Normal"]} &nbsp;
       <b>Elevated:</b> ${counts["Elevated"]} &nbsp;
@@ -239,7 +243,21 @@ window.onload = function() {
       <b>Hypertension Stage 2:</b> ${counts["Hypertension Stage 2"]} &nbsp;
       <b>Hypertensive Crisis:</b> ${counts["Hypertensive Crisis"]}`;
 
-    // User table
+    // Pie Chart
+    let ctx=document.getElementById("adminPieChart").getContext("2d");
+    if(adminPieChart) adminPieChart.destroy();
+    adminPieChart=new Chart(ctx,{
+      type:'pie',
+      data:{
+        labels:Object.keys(counts),
+        datasets:[{
+          data:Object.values(counts),
+          backgroundColor:["#28a745","#ffc107","#fd7e14","#dc3545","#800000"]
+        }]
+      },
+      options:{responsive:true, plugins:{legend:{position:'right'}}}
+    });
+
     users.forEach(u=>{
       let row=t.insertRow();
       row.insertCell(0).innerText=u.username;
@@ -272,7 +290,7 @@ window.onload = function() {
     }
   };
 
-  // --- Public Section ---
+  // Public Section
   function renderPublic(){
     let select=document.getElementById("userSelect");
     let summaryDiv=document.getElementById("publicSummary");
@@ -280,25 +298,23 @@ window.onload = function() {
     users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
 
     function updateTable(){
-      let uname = select.value;
-      let userRecords = records[uname] || [];
-      let t = document.getElementById("publicTable");
-      t.innerHTML = "<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
-
-      let counts = {Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
-      userRecords.forEach(r => {
-        counts[r.category] = (counts[r.category] || 0) + 1;
-        let row = t.insertRow();
-        row.insertCell(0).innerText = r.date;
-        row.insertCell(1).innerText = r.systolic;
-        row.insertCell(2).innerText = r.diastolic;
+      let uname=select.value;
+      let userRecords=records[uname]||[];
+      let t=document.getElementById("publicTable");
+      t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
+      let counts={Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
+      userRecords.forEach(r=>{
+        counts[r.category]=(counts[r.category]||0)+1;
+        let row=t.insertRow();
+        row.insertCell(0).innerText=r.date;
+        row.insertCell(1).innerText=r.systolic;
+        row.insertCell(2).innerText=r.diastolic;
         let catCell=row.insertCell(3);
         catCell.innerText=r.category;
         catCell.style.color=getCategoryColor(r.category);
       });
-
-      let total = userRecords.length;
-      summaryDiv.innerHTML = `
+      let total=userRecords.length;
+      summaryDiv.innerHTML=`
         <b>Total Records:</b> ${total} &nbsp;
         <b>Normal:</b> ${counts["Normal"]} &nbsp;
         <b>Elevated:</b> ${counts["Elevated"]} &nbsp;
@@ -306,12 +322,16 @@ window.onload = function() {
         <b>Hypertension Stage 2:</b> ${counts["Hypertension Stage 2"]} &nbsp;
         <b>Hypertensive Crisis:</b> ${counts["Hypertensive Crisis"]}`;
     }
-
-    select.onchange = updateTable;
+    select.onchange=updateTable;
     if(users.length>0) select.onchange();
   }
 
-  // --- Initial Tab ---
+  function renderPublicInline(){
+    let select=document.getElementById("userSelect");
+    if(select.value===currentUser) select.onchange();
+  }
+
+  // Initial tab
   if(!currentUser) showTab("loginSection");
   else showTab("trackerSection");
 };
