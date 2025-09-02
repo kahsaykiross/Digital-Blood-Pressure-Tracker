@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function categorize(s,d){ if(s<120&&d<80) return "Normal"; if(s<130&&d<80) return "Elevated"; return "Hypertension"; }
   function getBPColor(s,d){ if(s<120&&d<80) return "green"; if(s<130&&d<80) return "orange"; return "red"; }
   function getAllReadings(){ let all=[]; users.forEach(u=>u.readings?.forEach(r=>all.push({...r,user:u.username}))); return all; }
-
   let bpReadings = getAllReadings();
 
   const ctx = document.getElementById("bpChart").getContext("2d");
