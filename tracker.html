@@ -2,312 +2,206 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BP Tracker - Admin & Users</title>
-<style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f0f0f0}
-h2{text-align:center}
-.tabs{margin-bottom:15px;}
-.tabs button{padding:10px;margin-right:5px;border:none;background:#007bff;color:white;border-radius:5px;cursor:pointer;}
-.tabs button:hover{background:#0056b3;}
-section{background:#fff;padding:15px;margin-bottom:20px;border-radius:10px;display:none;}
-input,button,select{padding:8px;margin:5px;width:100%;border-radius:5px;border:1px solid #ccc;}
-button{background:#007bff;color:#fff;border:none;cursor:pointer;}
-button:hover{background:#0056b3;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{padding:8px;text-align:center;border:1px solid #ddd;}
-th{background:#007bff;color:#fff;}
-</style>
+<title>Blood Pressure Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  section { display:none; margin-top:20px; }
+  table, th, td { border:1px solid black; border-collapse:collapse; padding:5px; }
+</style>
 </head>
 <body>
-<h2>Digital Blood Pressure Tracker</h2>
+<h2>Blood Pressure Tracker</h2>
 
-<div class="tabs" id="tabs" style="display:none">
-  <button onclick="showTab('dashboard')">Dashboard</button>
-  <button onclick="showTab('record')">My Records</button>
-  <button id="adminTabBtn" onclick="showTab('admin')" style="display:none">Admin Panel</button>
-  <button id="restoreTabBtn" onclick="showTab('restore')" style="display:none">Restore Users</button>
+<nav>
+  <button onclick="showTab('loginSection')">Login</button>
+  <button onclick="showTab('registerSection')">Register</button>
   <button onclick="logout()">Logout</button>
-</div>
+  <button onclick="showTab('trackerSection')">Tracker</button>
+  <button onclick="showTab('adminSection')">Admin</button>
+  <button onclick="showTab('publicSection')">Public</button>
+</nav>
 
-<section id="dashboard">
-<h3>Public Dashboard</h3>
-<table id="publicTable">
-<tr><th>User</th><th>Total Readings</th><th>Avg Systolic</th><th>Avg Diastolic</th></tr>
-</table>
-<canvas id="avgBPChart"></canvas>
-<canvas id="categoryChart"></canvas>
-
-<h3>User Trend Over Time</h3>
-<select id="userSelect"><option value="">Select User</option></select>
-<canvas id="trendChart"></canvas>
-</section>
-
-<section id="record">
-<h3>My Records</h3>
-<p>Welcome, <span id="currentUserDisplay"></span>! (<span id="userRoleDisplay"></span>)</p>
-<form id="bpForm">
-<input type="number" id="systolic" placeholder="Systolic" required>
-<input type="number" id="diastolic" placeholder="Diastolic" required>
-<button type="submit">Add Reading</button>
-</form>
-<table id="personalTable">
-<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>
-</table>
-</section>
-
-<section id="admin">
-<h3>All Users Records (Admin Only)</h3>
-<table id="adminTable">
-<tr><th>Date</th><th>User</th><th>Systolic</th><th>Diastolic</th><th>Category</th><th>Actions</th></tr>
-</table>
-</section>
-
-<section id="restore">
-<h3>Revoked Users (Restore)</h3>
-<table id="restoreTable">
-<tr><th>Username</th><th>Role</th><th>Action</th></tr>
-</table>
+<section id="loginSection">
+  <h3>Login</h3>
+  <form id="loginForm">
+    <input id="loginUser" placeholder="Username" required>
+    <input type="password" id="loginPass" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
 </section>
 
 <section id="registerSection">
-<h3>Register</h3>
-<form id="registerForm">
-<input type="text" id="regUsername" placeholder="Username" required>
-<input type="password" id="regPassword" placeholder="Password" required>
-<select id="regRole"><option value="user">User</option><option value="admin">Admin</option></select>
-<button type="submit">Register</button>
-</form>
+  <h3>Register</h3>
+  <form id="registerForm">
+    <input id="regUser" placeholder="Username" required>
+    <input type="password" id="regPass" placeholder="Password" required>
+    <button type="submit">Register</button>
+  </form>
 </section>
 
-<section id="loginSection">
-<h3>Login</h3>
-<form id="loginForm">
-<input type="text" id="username" placeholder="Username" required>
-<input type="password" id="password" placeholder="Password" required>
-<button type="submit">Login</button>
-</form>
+<section id="trackerSection">
+  <h3>Record BP</h3>
+  <form id="bpForm">
+    <input type="number" id="systolic" placeholder="Systolic" required>
+    <input type="number" id="diastolic" placeholder="Diastolic" required>
+    <button type="submit">Save</button>
+  </form>
+  <table id="bpTable"><tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Action</th></tr></table>
+  <canvas id="bpChart" width="400" height="200"></canvas>
+</section>
+
+<section id="adminSection">
+  <h3>Admin Panel</h3>
+  <table id="adminTable"><tr><th>User</th><th>Status</th><th>Action</th></tr></table>
+</section>
+
+<section id="publicSection">
+  <h3>Public Records</h3>
+  <select id="userSelect"></select>
+  <table id="publicTable"><tr><th>Date</th><th>Systolic</th><th>Diastolic</th></tr></table>
 </section>
 
 <script>
 window.onload = function() {
-  // ==================== Data Initialization ====================
-  let users = JSON.parse(localStorage.getItem("users")||"[]");
-  let revokedUsers = JSON.parse(localStorage.getItem("revokedUsers")||"[]");
-  let currentUser = JSON.parse(localStorage.getItem("currentUser")||"null");
+  let users = JSON.parse(localStorage.getItem("users") || "[]");
+  let records = JSON.parse(localStorage.getItem("records") || "{}");
+  let currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+  let chart;
 
-  users = users.map(u=>({
-    username:u.username||"unknown",
-    password:u.password||"",
-    role:u.role||"user",
-    blocked:u.blocked||false,
-    readings:Array.isArray(u.readings)?u.readings:[]
-  }));
+  function saveData() {
+    localStorage.setItem("users", JSON.stringify(users));
+    localStorage.setItem("records", JSON.stringify(records));
+    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  }
 
-  revokedUsers = revokedUsers.map(u=>({
-    username:u.username||"unknown",
-    password:u.password||"",
-    role:u.role||"user",
-    blocked:u.blocked||false,
-    readings:Array.isArray(u.readings)?u.readings:[]
-  }));
+  // Navigation
+  window.showTab = function(id) {
+    document.querySelectorAll("section").forEach(s=>s.style.display="none");
+    document.getElementById(id).style.display="block";
+    if(id==="trackerSection") renderTable();
+    if(id==="adminSection") renderAdmin();
+    if(id==="publicSection") renderPublic();
+  };
 
-  localStorage.setItem("users", JSON.stringify(users));
-  localStorage.setItem("revokedUsers", JSON.stringify(revokedUsers));
-  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  window.logout = function(){
+    currentUser = null;
+    saveData();
+    showTab("loginSection");
+  };
 
-  // ==================== Utility Functions ====================
-  function categorize(s,d){ if(s<120&&d<80)return"Normal"; if(s<130&&d<80)return"Elevated"; return"Hypertension"; }
-  function showTab(tab){ document.querySelectorAll('section').forEach(s=>s.style.display='none'); document.getElementById(tab).style.display='block'; }
-  function logout(){ currentUser=null; localStorage.removeItem("currentUser"); document.getElementById("tabs").style.display='none'; document.getElementById("loginSection").style.display='block'; document.getElementById("registerSection").style.display='block'; }
+  // Register
+  document.getElementById("registerForm").onsubmit = e=>{
+    e.preventDefault();
+    let u=document.getElementById("regUser").value;
+    let p=document.getElementById("regPass").value;
+    if(users.find(x=>x.username===u)) return alert("User exists");
+    users.push({username:u,password:p,blocked:false});
+    records[u]=[];
+    saveData();
+    alert("Registered!");
+  };
 
-  // ==================== Dashboard Functions ====================
-  let avgBPChart, categoryChart, trendChart;
+  // Login
+  document.getElementById("loginForm").onsubmit = e=>{
+    e.preventDefault();
+    let u=document.getElementById("loginUser").value;
+    let p=document.getElementById("loginPass").value;
+    let user=users.find(x=>x.username===u && x.password===p);
+    if(!user) return alert("Invalid");
+    if(user.blocked) return alert("Blocked");
+    currentUser=user.username;
+    saveData();
+    showTab("trackerSection");
+  };
 
-  function updatePublicDashboard(){
-    const table=document.getElementById("publicTable");
-    table.innerHTML="<tr><th>User</th><th>Total Readings</th><th>Avg Systolic</th><th>Avg Diastolic</th></tr>";
-    const labels=[],avgSyst=[],avgDyst=[],catCounts={Normal:0,Elevated:0,Hypertension:0};
-    users.forEach(u=>{
-      if(u.readings.length>0){
-        const total=u.readings.length;
-        const avgS=(u.readings.reduce((a,b)=>a+b.systolic,0)/total).toFixed(1);
-        const avgD=(u.readings.reduce((a,b)=>a+b.diastolic,0)/total).toFixed(1);
-        table.innerHTML+=`<tr><td>${u.username}</td><td>${total}</td><td>${avgS}</td><td>${avgD}</td></tr>`;
-        labels.push(u.username); avgSyst.push(avgS); avgDyst.push(avgD);
-        u.readings.forEach(r=>catCounts[r.category]++);
-      }
+  // Record BP
+  document.getElementById("bpForm").onsubmit = e=>{
+    e.preventDefault();
+    if(!currentUser) return alert("Login first");
+    let s=+document.getElementById("systolic").value;
+    let d=+document.getElementById("diastolic").value;
+    let rec={date:new Date().toLocaleString(),systolic:s,diastolic:d};
+    records[currentUser].push(rec);
+    saveData();
+    renderTable();
+  };
+
+  function renderTable(){
+    let t=document.getElementById("bpTable");
+    t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Action</th></tr>";
+    (records[currentUser]||[]).forEach((r,i)=>{
+      t.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td>
+      <td><button onclick="deleteBP(${i})">Delete</button></td></tr>`;
     });
-
-    if(avgBPChart){ avgBPChart.data.labels=labels; avgBPChart.data.datasets[0].data=avgSyst; avgBPChart.data.datasets[1].data=avgDyst; avgBPChart.update();}
-    else avgBPChart=new Chart(document.getElementById('avgBPChart'),{type:'bar',data:{labels,datasets:[{label:'Avg Systolic',data:avgSyst,backgroundColor:'rgba(255,99,132,0.6)'},{label:'Avg Diastolic',data:avgDyst,backgroundColor:'rgba(54,162,235,0.6)'}]},options:{responsive:true,plugins:{title:{display:true,text:'Average BP per User'}}}});
-
-    if(categoryChart){ categoryChart.data.datasets[0].data=Object.values(catCounts); categoryChart.update();}
-    else categoryChart=new Chart(document.getElementById('categoryChart'),{type:'pie',data:{labels:Object.keys(catCounts),datasets:[{data:Object.values(catCounts),backgroundColor:['#28a745','#ffc107','#dc3545']}]},options:{responsive:true,plugins:{title:{display:true,text:'BP Category Distribution'}}}});
-
-    // Populate dropdown for user trend
-    const select=document.getElementById("userSelect");
-    select.innerHTML='<option value="">Select User</option>';
-    users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option`);
+    renderChart();
   }
 
-  document.getElementById("userSelect").addEventListener("change", e=>{
-    const username=e.target.value; if(!username) return;
-    const user=users.find(u=>u.username===username);
-    const labels=user.readings.map(r=>r.date);
-    const systolic=user.readings.map(r=>r.systolic);
-    const diastolic=user.readings.map(r=>r.diastolic);
-    if(trendChart){ trendChart.data.labels=labels; trendChart.data.datasets[0].data=systolic; trendChart.data.datasets[1].data=diastolic; trendChart.update(); }
-    else trendChart=new Chart(document.getElementById("trendChart"),{type:'line',data:{labels,datasets:[{label:'Systolic',data:systolic,borderColor:'red',fill:false},{label:'Diastolic',data:diastolic,borderColor:'blue',fill:false}]},options:{responsive:true,plugins:{title:{display:true,text:'BP Trend'}}}});
-  });
-
-  // ==================== Personal Records ====================
-  function updatePersonalRecords(){
-    const table=document.getElementById("personalTable");
-    table.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
-    if(!currentUser || !currentUser.username) return;
-    const user=users.find(u=>u.username===currentUser.username);
-    if(!user) return;
-    user.readings.forEach(r=>table.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td><td>${r.category}</td></tr>`);
+  function renderChart(){
+    let ctx=document.getElementById("bpChart");
+    let data=records[currentUser]||[];
+    let labels=data.map(r=>r.date);
+    let sys=data.map(r=>r.systolic);
+    let dia=data.map(r=>r.diastolic);
+    if(chart) chart.destroy();
+    chart=new Chart(ctx,{type:"line",
+      data:{labels,datasets:[
+        {label:"Systolic",data:sys,borderColor:"red"},
+        {label:"Diastolic",data:dia,borderColor:"blue"}
+      ]}});
   }
 
-  // ==================== Admin Panel ====================
-  function updateAdminTable(){
-    const table=document.getElementById("adminTable");
-    table.innerHTML="<tr><th>Date</th><th>User</th><th>Systolic</th><th>Diastolic</th><th>Category</th><th>Actions</th></tr>";
+  window.deleteBP=function(i){
+    records[currentUser].splice(i,1);
+    saveData();
+    renderTable();
+  };
+
+  function renderAdmin(){
+    let t=document.getElementById("adminTable");
+    t.innerHTML="<tr><th>User</th><th>Status</th><th>Action</th></tr>";
     users.forEach(u=>{
-      u.readings.forEach((r,idx)=>{
-        table.innerHTML+=`<tr>
-          <td>${r.date}</td>
-          <td>${u.username}</td>
-          <td><input type="number" value="${r.systolic}" id="systolic-${u.username}-${idx}" style="width:60px"></td>
-          <td><input type="number" value="${r.diastolic}" id="diastolic-${u.username}-${idx}" style="width:60px"></td>
-          <td id="category-${u.username}-${idx}">${r.category}</td>
-          <td>
-            <button onclick="saveBP('${u.username}',${idx})">Save</button>
-            <button onclick="deleteBP('${u.username}',${idx})">Delete</button>
-            <button onclick="toggleBlock('${u.username}')">${u.blocked?'Unblock':'Block'}</button>
-            <button onclick="revokeUser('${u.username}')">Revoke</button>
-          </td>
-        </tr>`;
+      t.innerHTML+=`<tr><td>${u.username}</td><td>${u.blocked?"Blocked":"Active"}</td>
+      <td><button onclick="toggleBlock('${u.username}')">${u.blocked?"Unblock":"Block"}</button>
+      <button onclick="revokeUser('${u.username}')">Revoke</button></td></tr>`;
+    });
+  }
+
+  window.toggleBlock=function(user){
+    let u=users.find(x=>x.username===user);
+    u.blocked=!u.blocked;
+    saveData(); renderAdmin();
+  };
+
+  window.revokeUser=function(user){
+    users=users.filter(x=>x.username!==user);
+    delete records[user];
+    saveData(); renderAdmin();
+  };
+
+  function renderPublic(){
+    let select=document.getElementById("userSelect");
+    select.innerHTML="";
+    users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
+    select.onchange=()=>{
+      let uname=select.value;
+      let t=document.getElementById("publicTable");
+      t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th></tr>";
+      (records[uname]||[]).forEach(r=>{
+        t.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td></tr>`;
       });
-    });
+    };
+    select.onchange();
   }
 
-  function saveBP(username,idx){
-    const s=parseInt(document.getElementById(`systolic-${username}-${idx}`).value);
-    const d=parseInt(document.getElementById(`diastolic-${username}-${idx}`).value);
-    const user=users.find(u=>u.username===username);
-    user.readings[idx].systolic=s;
-    user.readings[idx].diastolic=d;
-    user.readings[idx].category=categorize(s,d);
-    localStorage.setItem("users",JSON.stringify(users));
-    updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
+  // Show login/register if no one logged in
+  if (!currentUser) {
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("registerSection").style.display = "block";
+  } else {
+    showTab("trackerSection");
   }
-  function deleteBP(username,idx){
-    if(!confirm("Delete this reading?")) return;
-    const user=users.find(u=>u.username===username);
-    user.readings.splice(idx,1);
-    localStorage.setItem("users",JSON.stringify(users));
-    updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
-  }
-  function toggleBlock(username){
-    const user=users.find(u=>u.username===username);
-    user.blocked=!user.blocked;
-    localStorage.setItem("users",JSON.stringify(users));
-    updateAdminTable();
-  }
-  function revokeUser(username){
-    const idx=users.findIndex(u=>u.username===username);
-    if(idx===-1) return;
-    revokedUsers.push(users[idx]);
-    users.splice(idx,1);
-    localStorage.setItem("users",JSON.stringify(users));
-    localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
-    updateAdminTable(); updateRestoreTable(); updatePublicDashboard();
-  }
-  function restoreUser(username){
-    const idx=revokedUsers.findIndex(u=>u.username===username);
-    if(idx===-1) return;
-    users.push(revokedUsers[idx]);
-    revokedUsers.splice(idx,1);
-    localStorage.setItem("users",JSON.stringify(users));
-    localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
-    updateAdminTable(); updateRestoreTable(); updatePublicDashboard();
-  }
-  function updateRestoreTable(){
-    const table=document.getElementById("restoreTable");
-    table.innerHTML="<tr><th>Username</th><th>Role</th><th>Action</th></tr>";
-    revokedUsers.forEach(u=>{
-      table.innerHTML+=`<tr>
-        <td>${u.username}</td>
-        <td>${u.role}</td>
-        <td><button onclick="restoreUser('${u.username}')">Restore</button></td>
-      </tr>`;
-    });
-  }
-
-  // ==================== Forms ====================
-  document.getElementById("registerForm").addEventListener("submit",e=>{
-    e.preventDefault();
-    const u=document.getElementById("regUsername").value.trim();
-    const p=document.getElementById("regPassword").value.trim();
-    const role=document.getElementById("regRole").value;
-    if(users.find(x=>x.username===u)||revokedUsers.find(x=>x.username===u)){ alert("Username exists"); return;}
-    users.push({username:u,password:p,role,blocked:false,readings:[]});
-    localStorage.setItem("users",JSON.stringify(users));
-    alert("Registered! Now login."); e.target.reset();
-  });
-
-  document.getElementById("loginForm").addEventListener("submit",e=>{
-    e.preventDefault();
-    const u=document.getElementById("username").value.trim();
-    const p=document.getElementById("password").value.trim();
-    const user=users.find(x=>x.username===u && x.password===p);
-    if(!user){ alert("Invalid credentials or blocked"); return; }
-    if(user.blocked){ alert("You are blocked. Contact admin."); return; }
-    currentUser={username:user.username, role:user.role};
-    localStorage.setItem("currentUser",JSON.stringify(currentUser));
-    document.getElementById("loginSection").style.display="none";
-    document.getElementById("registerSection").style.display="none";
-    document.getElementById("tabs").style.display="block";
-    document.getElementById("currentUserDisplay").textContent=currentUser.username;
-    document.getElementById("userRoleDisplay").textContent=currentUser.role;
-    if(currentUser.role==='admin'){ 
-      document.getElementById("adminTabBtn").style.display='inline-block'; 
-      document.getElementById("restoreTabBtn").style.display='inline-block'; 
-      updateAdminTable(); updateRestoreTable();
-    }
-    showTab('dashboard'); updatePersonalRecords(); updatePublicDashboard();
-  });
-
-  document.getElementById("bpForm").addEventListener("submit",e=>{
-    e.preventDefault();
-    const s=parseInt(document.getElementById("systolic").value);
-    const d=parseInt(document.getElementById("diastolic").value);
-    const user=users.find(u=>u.username===currentUser.username);
-    const reading={date:new Date().toLocaleDateString(),systolic:s,diastolic:d,category:categorize(s,d)};
-    user.readings.push(reading);
-    localStorage.setItem("users",JSON.stringify(users));
-    updatePersonalRecords(); updatePublicDashboard(); e.target.reset();
-  });
-
-  // ==================== On Load ====================
-  if(currentUser){
-    document.getElementById("loginSection").style.display="none";
-    document.getElementById("registerSection").style.display="none";
-    document.getElementById("tabs").style.display="block";
-    document.getElementById("currentUserDisplay").textContent=currentUser.username;
-    document.getElementById("userRoleDisplay").textContent=currentUser.role;
-    if(currentUser.role==='admin'){ 
-      document.getElementById("adminTabBtn").style.display='inline-block'; 
-      document.getElementById("restoreTabBtn").style.display='inline-block'; 
-      updateAdminTable(); updateRestoreTable();
-    }
-    showTab('dashboard'); updatePersonalRecords(); updatePublicDashboard();
-  }
-
-}
+};
 </script>
 </body>
 </html>
