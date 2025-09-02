@@ -16,7 +16,6 @@ button:hover{background:#0056b3;}
 table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{padding:8px;text-align:center;border:1px solid #ddd;}
 th{background:#007bff;color:#fff;}
-canvas{max-width:100%;margin-top:20px;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -97,31 +96,28 @@ canvas{max-width:100%;margin-top:20px;}
 </section>
 
 <script>
-// Data initialization
+// ==================== Data Initialization ====================
 let users = JSON.parse(localStorage.getItem("users")||"[]");
-let currentUser = JSON.parse(localStorage.getItem("currentUser")||"null");
 let revokedUsers = JSON.parse(localStorage.getItem("revokedUsers")||"[]");
-let avgBPChart, categoryChart, trendChart;
+let currentUser = JSON.parse(localStorage.getItem("currentUser")||"null");
 
-// Categorize BP
+// Ensure all users have required fields
+users.forEach(u=>{
+  if(!u.readings) u.readings=[];
+  if(u.blocked === undefined) u.blocked=false;
+});
+revokedUsers.forEach(u=>{
+  if(!u.readings) u.readings=[];
+  if(u.blocked === undefined) u.blocked=false;
+});
+
+// ==================== Utility Functions ====================
 function categorize(s,d){ if(s<120&&d<80)return"Normal"; if(s<130&&d<80)return"Elevated"; return"Hypertension"; }
+function showTab(tab){ document.querySelectorAll('section').forEach(s=>s.style.display='none'); document.getElementById(tab).style.display='block'; }
+function logout(){ currentUser=null; localStorage.removeItem("currentUser"); document.getElementById("tabs").style.display='none'; document.getElementById("loginSection").style.display='block'; document.getElementById("registerSection").style.display='block'; }
 
-// Tabs
-function showTab(tab){
-  document.querySelectorAll('section').forEach(s=>s.style.display='none');
-  document.getElementById(tab).style.display='block';
-}
-
-// Logout
-function logout(){
-  currentUser=null;
-  localStorage.removeItem("currentUser");
-  document.getElementById("tabs").style.display='none';
-  document.getElementById("loginSection").style.display='block';
-  document.getElementById("registerSection").style.display='block';
-}
-
-// Public Dashboard
+// ==================== Public Dashboard ====================
+let avgBPChart, categoryChart, trendChart;
 function updatePublicDashboard(){
   const table=document.getElementById("publicTable");
   table.innerHTML="<tr><th>User</th><th>Total Readings</th><th>Avg Systolic</th><th>Avg Diastolic</th></tr>";
@@ -152,24 +148,22 @@ function updatePublicDashboard(){
   populateUserDropdown();
 }
 
-// Personal Records
+// ==================== Personal Records ====================
 function updatePersonalRecords(){
   const table=document.getElementById("personalTable");
   table.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
-  if(!currentUser) return;
+  if(!currentUser || !currentUser.username) return;
   const user=users.find(u=>u.username===currentUser.username);
   if(!user) return;
   user.readings.forEach(r=>table.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td><td>${r.category}</td></tr>`);
 }
 
-// User dropdown for trend
+// ==================== User Trend Chart ====================
 function populateUserDropdown(){
   const select=document.getElementById("userSelect");
   select.innerHTML='<option value="">Select User</option>';
   users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
 }
-
-// Trend chart
 document.getElementById("userSelect").addEventListener("change", e=>{
   const username=e.target.value; if(!username) return;
   const user=users.find(u=>u.username===username);
@@ -184,7 +178,7 @@ document.getElementById("userSelect").addEventListener("change", e=>{
   });
 });
 
-// Admin Table
+// ==================== Admin Panel ====================
 function updateAdminTable(){
   const table=document.getElementById("adminTable");
   table.innerHTML="<tr><th>Date</th><th>User</th><th>Systolic</th><th>Diastolic</th><th>Category</th><th>Actions</th></tr>";
@@ -206,36 +200,29 @@ function updateAdminTable(){
     });
   });
 }
-
-// Restore Table
-function updateRestoreTable(){
-  const table=document.getElementById("restoreTable");
-  table.innerHTML="<tr><th>Username</th><th>Role</th><th>Action</th></tr>";
-  revokedUsers.forEach((u,idx)=>table.innerHTML+=`<tr><td>${u.username}</td><td>${u.role}</td><td><button onclick="restoreUser(${idx})">Restore</button></td></tr>`);
-}
-
-// Admin actions
 function saveBP(username,index){
+  const user=users.find(u=>u.username===username);
+  if(!user || !user.readings[index]) return;
   const s=parseInt(document.getElementById(`systolic-${username}-${index}`).value);
   const d=parseInt(document.getElementById(`diastolic-${username}-${index}`).value);
   if(isNaN(s)||isNaN(d)){ alert("Invalid"); return; }
-  const user=users.find(u=>u.username===username);
   user.readings[index].systolic=s;
   user.readings[index].diastolic=d;
   user.readings[index].category=categorize(s,d);
-  document.getElementById(`category-${username}-${index}`).textContent=user.readings[index].category;
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
 }
 function deleteBP(username,index){
   if(!confirm("Delete this reading?")) return;
   const user=users.find(u=>u.username===username);
+  if(!user || !user.readings[index]) return;
   user.readings.splice(index,1);
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
 }
 function toggleBlock(username){
   const user=users.find(u=>u.username===username);
+  if(!user) return;
   user.blocked=!user.blocked;
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); alert(user.blocked?"Blocked":"Unblocked");
@@ -243,11 +230,19 @@ function toggleBlock(username){
 function revokeUser(username){
   if(!confirm(`Revoke ${username}?`)) return;
   const idx=users.findIndex(u=>u.username===username);
+  if(idx<0) return;
   const user=users.splice(idx,1)[0];
   revokedUsers.push(user);
   localStorage.setItem("users",JSON.stringify(users));
   localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
   updateAdminTable(); updateRestoreTable(); updatePersonalRecords(); updatePublicDashboard();
+}
+
+// ==================== Restore Users ====================
+function updateRestoreTable(){
+  const table=document.getElementById("restoreTable");
+  table.innerHTML="<tr><th>Username</th><th>Role</th><th>Action</th></tr>";
+  revokedUsers.forEach((u,idx)=>table.innerHTML+=`<tr><td>${u.username}</td><td>${u.role}</td><td><button onclick="restoreUser(${idx})">Restore</button></td></tr>`);
 }
 function restoreUser(idx){
   const user=revokedUsers.splice(idx,1)[0];
@@ -257,7 +252,7 @@ function restoreUser(idx){
   updateAdminTable(); updateRestoreTable(); updatePersonalRecords(); updatePublicDashboard();
 }
 
-// Registration
+// ==================== Registration/Login ====================
 document.getElementById("registerForm").addEventListener("submit", e=>{
   e.preventDefault();
   const u=document.getElementById("regUsername").value.trim();
@@ -265,10 +260,10 @@ document.getElementById("registerForm").addEventListener("submit", e=>{
   const r=document.getElementById("regRole").value;
   if(users.find(x=>x.username===u)||revokedUsers.find(x=>x.username===u)){ alert("Username exists"); return; }
   users.push({username:u,password:p,role:r,readings:[],blocked:false});
-  localStorage.setItem("users",JSON.stringify(users)); alert("Registered! Now login."); e.target.reset();
+  localStorage.setItem("users",JSON.stringify(users));
+  alert("Registered! Now login."); e.target.reset();
 });
 
-// Login
 document.getElementById("loginForm").addEventListener("submit", e=>{
   e.preventDefault();
   const u=document.getElementById("username").value.trim();
@@ -295,11 +290,12 @@ document.getElementById("bpForm").addEventListener("submit", e=>{
   if(isNaN(s)||isNaN(d)){ alert("Invalid numbers"); return; }
   const user=users.find(u=>u.username===currentUser.username);
   user.readings.push({date:new Date().toLocaleDateString(),systolic:s,diastolic:d,category:categorize(s,d)});
-  localStorage.setItem("users",JSON.stringify(users)); updatePersonalRecords(); updatePublicDashboard(); e.target.reset();
+  localStorage.setItem("users",JSON.stringify(users));
+  updatePersonalRecords(); updatePublicDashboard(); e.target.reset();
 });
 
-// Auto-login if user exists
-if(currentUser){
+// ==================== On Page Load ====================
+if(currentUser){ 
   document.getElementById("registerSection").style.display='none';
   document.getElementById("loginSection").style.display='none';
   document.getElementById("tabs").style.display='block';
