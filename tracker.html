@@ -22,7 +22,6 @@ th{background:#007bff;color:#fff;}
 <body>
 <h2>Digital Blood Pressure Tracker</h2>
 
-<!-- Tabs -->
 <div class="tabs" id="tabs" style="display:none">
   <button onclick="showTab('dashboard')">Dashboard</button>
   <button onclick="showTab('record')">My Records</button>
@@ -31,7 +30,6 @@ th{background:#007bff;color:#fff;}
   <button onclick="logout()">Logout</button>
 </div>
 
-<!-- Dashboard -->
 <section id="dashboard">
 <h3>Public Dashboard</h3>
 <table id="publicTable">
@@ -45,7 +43,6 @@ th{background:#007bff;color:#fff;}
 <canvas id="trendChart"></canvas>
 </section>
 
-<!-- Record Section -->
 <section id="record">
 <h3>My Records</h3>
 <p>Welcome, <span id="currentUserDisplay"></span>! (<span id="userRoleDisplay"></span>)</p>
@@ -59,7 +56,6 @@ th{background:#007bff;color:#fff;}
 </table>
 </section>
 
-<!-- Admin Panel -->
 <section id="admin">
 <h3>All Users Records (Admin Only)</h3>
 <table id="adminTable">
@@ -67,7 +63,6 @@ th{background:#007bff;color:#fff;}
 </table>
 </section>
 
-<!-- Restore Users -->
 <section id="restore">
 <h3>Revoked Users (Restore)</h3>
 <table id="restoreTable">
@@ -75,7 +70,6 @@ th{background:#007bff;color:#fff;}
 </table>
 </section>
 
-<!-- Registration/Login -->
 <section id="registerSection">
 <h3>Register</h3>
 <form id="registerForm">
@@ -96,27 +90,46 @@ th{background:#007bff;color:#fff;}
 </section>
 
 <script>
-// ==================== Data Initialization ====================
-let users = JSON.parse(localStorage.getItem("users")||"[]");
-let revokedUsers = JSON.parse(localStorage.getItem("revokedUsers")||"[]");
-let currentUser = JSON.parse(localStorage.getItem("currentUser")||"null");
+// ==================== Data Initialization & Upgrade ====================
+let rawUsers = localStorage.getItem("users");
+let rawCurrent = localStorage.getItem("currentUser");
+let users = JSON.parse(rawUsers || "[]");
+let revokedUsers = JSON.parse(localStorage.getItem("revokedUsers") || "[]");
+let currentUser = JSON.parse(rawCurrent || "null");
 
-// Ensure all users have required fields
-users.forEach(u=>{
-  if(!u.readings) u.readings=[];
-  if(u.blocked === undefined) u.blocked=false;
-});
-revokedUsers.forEach(u=>{
-  if(!u.readings) u.readings=[];
-  if(u.blocked === undefined) u.blocked=false;
-});
+// Upgrade old users
+users = users.map(u => ({
+  username: u.username || "unknown",
+  password: u.password || "",
+  role: u.role || "user",
+  blocked: u.blocked !== undefined ? u.blocked : false,
+  readings: Array.isArray(u.readings) ? u.readings : []
+}));
+revokedUsers = revokedUsers.map(u => ({
+  username: u.username || "unknown",
+  password: u.password || "",
+  role: u.role || "user",
+  blocked: u.blocked !== undefined ? u.blocked : false,
+  readings: Array.isArray(u.readings) ? u.readings : []
+}));
+
+// Upgrade currentUser if string
+if(currentUser && typeof currentUser === "string"){
+  let found = users.find(u => u.username === currentUser);
+  if(found) currentUser = {username: found.username, role: found.role};
+  else currentUser = null;
+}
+
+localStorage.setItem("users", JSON.stringify(users));
+localStorage.setItem("revokedUsers", JSON.stringify(revokedUsers));
+localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
 // ==================== Utility Functions ====================
 function categorize(s,d){ if(s<120&&d<80)return"Normal"; if(s<130&&d<80)return"Elevated"; return"Hypertension"; }
 function showTab(tab){ document.querySelectorAll('section').forEach(s=>s.style.display='none'); document.getElementById(tab).style.display='block'; }
 function logout(){ currentUser=null; localStorage.removeItem("currentUser"); document.getElementById("tabs").style.display='none'; document.getElementById("loginSection").style.display='block'; document.getElementById("registerSection").style.display='block'; }
 
-// ==================== Public Dashboard ====================
+// ==================== Dashboard ====================
 let avgBPChart, categoryChart, trendChart;
 function updatePublicDashboard(){
   const table=document.getElementById("publicTable");
@@ -132,21 +145,28 @@ function updatePublicDashboard(){
       u.readings.forEach(r=>catCounts[r.category]++);
     }
   });
-  // Charts
-  if(avgBPChart){ avgBPChart.data.labels=labels; avgBPChart.data.datasets[0].data=avgSyst; avgBPChart.data.datasets[1].data=avgDyst; avgBPChart.update(); }
-  else avgBPChart=new Chart(document.getElementById('avgBPChart'),{
-    type:'bar',
-    data:{labels,datasets:[{label:'Avg Systolic',data:avgSyst,backgroundColor:'rgba(255,99,132,0.6)'},{label:'Avg Diastolic',data:avgDyst,backgroundColor:'rgba(54,162,235,0.6)'}]},
-    options:{responsive:true,plugins:{title:{display:true,text:'Average BP per User'}}}
-  });
-  if(categoryChart){ categoryChart.data.datasets[0].data=Object.values(catCounts); categoryChart.update(); }
-  else categoryChart=new Chart(document.getElementById('categoryChart'),{
-    type:'pie',
-    data:{labels:Object.keys(catCounts),datasets:[{data:Object.values(catCounts),backgroundColor:['#28a745','#ffc107','#dc3545']}]},
-    options:{responsive:true,plugins:{title:{display:true,text:'BP Category Distribution'}}}
-  });
+  if(avgBPChart){ avgBPChart.data.labels=labels; avgBPChart.data.datasets[0].data=avgSyst; avgBPChart.data.datasets[1].data=avgDyst; avgBPChart.update();}
+  else avgBPChart=new Chart(document.getElementById('avgBPChart'),{type:'bar',data:{labels,datasets:[{label:'Avg Systolic',data:avgSyst,backgroundColor:'rgba(255,99,132,0.6)'},{label:'Avg Diastolic',data:avgDyst,backgroundColor:'rgba(54,162,235,0.6)'}]},options:{responsive:true,plugins:{title:{display:true,text:'Average BP per User'}}}});
+  if(categoryChart){ categoryChart.data.datasets[0].data=Object.values(catCounts); categoryChart.update();}
+  else categoryChart=new Chart(document.getElementById('categoryChart'),{type:'pie',data:{labels:Object.keys(catCounts),datasets:[{data:Object.values(catCounts),backgroundColor:['#28a745','#ffc107','#dc3545']}]},options:{responsive:true,plugins:{title:{display:true,text:'BP Category Distribution'}}}});
   populateUserDropdown();
 }
+
+function populateUserDropdown(){
+  const select=document.getElementById("userSelect");
+  select.innerHTML='<option value="">Select User</option>';
+  users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
+}
+
+document.getElementById("userSelect").addEventListener("change", e=>{
+  const username=e.target.value; if(!username) return;
+  const user=users.find(u=>u.username===username);
+  const labels=user.readings.map(r=>r.date);
+  const systolic=user.readings.map(r=>r.systolic);
+  const diastolic=user.readings.map(r=>r.diastolic);
+  if(trendChart){ trendChart.data.labels=labels; trendChart.data.datasets[0].data=systolic; trendChart.data.datasets[1].data=diastolic; trendChart.update(); }
+  else trendChart=new Chart(document.getElementById("trendChart"),{type:'line',data:{labels,datasets:[{label:'Systolic',data:systolic,borderColor:'red',fill:false},{label:'Diastolic',data:diastolic,borderColor:'blue',fill:false}]},options:{responsive:true,plugins:{title:{display:true,text:'BP Trend'}}}});
+});
 
 // ==================== Personal Records ====================
 function updatePersonalRecords(){
@@ -157,26 +177,6 @@ function updatePersonalRecords(){
   if(!user) return;
   user.readings.forEach(r=>table.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td><td>${r.category}</td></tr>`);
 }
-
-// ==================== User Trend Chart ====================
-function populateUserDropdown(){
-  const select=document.getElementById("userSelect");
-  select.innerHTML='<option value="">Select User</option>';
-  users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
-}
-document.getElementById("userSelect").addEventListener("change", e=>{
-  const username=e.target.value; if(!username) return;
-  const user=users.find(u=>u.username===username);
-  const labels=user.readings.map(r=>r.date);
-  const systolic=user.readings.map(r=>r.systolic);
-  const diastolic=user.readings.map(r=>r.diastolic);
-  if(trendChart){ trendChart.data.labels=labels; trendChart.data.datasets[0].data=systolic; trendChart.data.datasets[1].data=diastolic; trendChart.update(); }
-  else trendChart=new Chart(document.getElementById('trendChart'),{
-    type:'line',
-    data:{labels,datasets:[{label:'Systolic',data:systolic,borderColor:'red',fill:false},{label:'Diastolic',data:diastolic,borderColor:'blue',fill:false}]},
-    options:{responsive:true,plugins:{title:{display:true,text:`BP Trend of ${username}`}}}
-  });
-});
 
 // ==================== Admin Panel ====================
 function updateAdminTable(){
@@ -200,108 +200,110 @@ function updateAdminTable(){
     });
   });
 }
-function saveBP(username,index){
+
+// ==================== Admin/User Functions ====================
+function saveBP(username,idx){
+  const s=parseInt(document.getElementById(`systolic-${username}-${idx}`).value);
+  const d=parseInt(document.getElementById(`diastolic-${username}-${idx}`).value);
   const user=users.find(u=>u.username===username);
-  if(!user || !user.readings[index]) return;
-  const s=parseInt(document.getElementById(`systolic-${username}-${index}`).value);
-  const d=parseInt(document.getElementById(`diastolic-${username}-${index}`).value);
-  if(isNaN(s)||isNaN(d)){ alert("Invalid"); return; }
-  user.readings[index].systolic=s;
-  user.readings[index].diastolic=d;
-  user.readings[index].category=categorize(s,d);
+  user.readings[idx].systolic=s;
+  user.readings[idx].diastolic=d;
+  user.readings[idx].category=categorize(s,d);
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
 }
-function deleteBP(username,index){
+function deleteBP(username,idx){
   if(!confirm("Delete this reading?")) return;
   const user=users.find(u=>u.username===username);
-  if(!user || !user.readings[index]) return;
-  user.readings.splice(index,1);
+  user.readings.splice(idx,1);
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
 }
 function toggleBlock(username){
   const user=users.find(u=>u.username===username);
-  if(!user) return;
   user.blocked=!user.blocked;
   localStorage.setItem("users",JSON.stringify(users));
-  updateAdminTable(); alert(user.blocked?"Blocked":"Unblocked");
+  updateAdminTable();
 }
 function revokeUser(username){
-  if(!confirm(`Revoke ${username}?`)) return;
   const idx=users.findIndex(u=>u.username===username);
-  if(idx<0) return;
-  const user=users.splice(idx,1)[0];
-  revokedUsers.push(user);
+  if(idx===-1) return;
+  revokedUsers.push(users[idx]);
+  users.splice(idx,1);
   localStorage.setItem("users",JSON.stringify(users));
   localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
-  updateAdminTable(); updateRestoreTable(); updatePersonalRecords(); updatePublicDashboard();
+  updateAdminTable(); updateRestoreTable(); updatePublicDashboard();
 }
-
-// ==================== Restore Users ====================
+function restoreUser(username){
+  const idx=revokedUsers.findIndex(u=>u.username===username);
+  if(idx===-1) return;
+  users.push(revokedUsers[idx]);
+  revokedUsers.splice(idx,1);
+  localStorage.setItem("users",JSON.stringify(users));
+  localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
+  updateAdminTable(); updateRestoreTable(); updatePublicDashboard();
+}
 function updateRestoreTable(){
   const table=document.getElementById("restoreTable");
   table.innerHTML="<tr><th>Username</th><th>Role</th><th>Action</th></tr>";
-  revokedUsers.forEach((u,idx)=>table.innerHTML+=`<tr><td>${u.username}</td><td>${u.role}</td><td><button onclick="restoreUser(${idx})">Restore</button></td></tr>`);
-}
-function restoreUser(idx){
-  const user=revokedUsers.splice(idx,1)[0];
-  users.push(user);
-  localStorage.setItem("users",JSON.stringify(users));
-  localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
-  updateAdminTable(); updateRestoreTable(); updatePersonalRecords(); updatePublicDashboard();
+  revokedUsers.forEach(u=>{
+    table.innerHTML+=`<tr>
+      <td>${u.username}</td>
+      <td>${u.role}</td>
+      <td><button onclick="restoreUser('${u.username}')">Restore</button></td>
+    </tr>`;
+  });
 }
 
-// ==================== Registration/Login ====================
-document.getElementById("registerForm").addEventListener("submit", e=>{
+// ==================== Forms ====================
+document.getElementById("registerForm").addEventListener("submit",e=>{
   e.preventDefault();
   const u=document.getElementById("regUsername").value.trim();
   const p=document.getElementById("regPassword").value.trim();
-  const r=document.getElementById("regRole").value;
-  if(users.find(x=>x.username===u)||revokedUsers.find(x=>x.username===u)){ alert("Username exists"); return; }
-  users.push({username:u,password:p,role:r,readings:[],blocked:false});
+  const role=document.getElementById("regRole").value;
+  if(users.find(x=>x.username===u)||revokedUsers.find(x=>x.username===u)){ alert("Username exists"); return;}
+  users.push({username:u,password:p,role,blocked:false,readings:[]});
   localStorage.setItem("users",JSON.stringify(users));
   alert("Registered! Now login."); e.target.reset();
 });
 
-document.getElementById("loginForm").addEventListener("submit", e=>{
+document.getElementById("loginForm").addEventListener("submit",e=>{
   e.preventDefault();
   const u=document.getElementById("username").value.trim();
   const p=document.getElementById("password").value.trim();
   const user=users.find(x=>x.username===u && x.password===p);
-  if(!user){ alert("Invalid credentials"); return; }
-  if(user.blocked){ alert("This account is blocked"); return; }
-  currentUser={username:u,role:user.role};
+  if(!user){ alert("Invalid credentials or blocked"); return; }
+  if(user.blocked){ alert("You are blocked. Contact admin."); return; }
+  currentUser={username:user.username, role:user.role};
   localStorage.setItem("currentUser",JSON.stringify(currentUser));
-  document.getElementById("registerSection").style.display='none';
-  document.getElementById("loginSection").style.display='none';
-  document.getElementById("tabs").style.display='block';
+  document.getElementById("loginSection").style.display="none";
+  document.getElementById("registerSection").style.display="none";
+  document.getElementById("tabs").style.display="block";
   document.getElementById("currentUserDisplay").textContent=currentUser.username;
   document.getElementById("userRoleDisplay").textContent=currentUser.role;
-  if(currentUser.role==='admin'){ document.getElementById("adminTabBtn").style.display='inline-block'; document.getElementById("restoreTabBtn").style.display='inline-block'; updateAdminTable(); updateRestoreTable(); }
+  if(currentUser.role==='admin'){ document.getElementById("adminTabBtn").style.display='inline-block'; document.getElementById("restoreTabBtn").style.display='inline-block'; updateAdminTable(); updateRestoreTable();}
   showTab('dashboard'); updatePersonalRecords(); updatePublicDashboard();
 });
 
-// Add BP Reading
-document.getElementById("bpForm").addEventListener("submit", e=>{
+document.getElementById("bpForm").addEventListener("submit",e=>{
   e.preventDefault();
   const s=parseInt(document.getElementById("systolic").value);
   const d=parseInt(document.getElementById("diastolic").value);
-  if(isNaN(s)||isNaN(d)){ alert("Invalid numbers"); return; }
   const user=users.find(u=>u.username===currentUser.username);
-  user.readings.push({date:new Date().toLocaleDateString(),systolic:s,diastolic:d,category:categorize(s,d)});
+  const reading={date:new Date().toLocaleDateString(),systolic:s,diastolic:d,category:categorize(s,d)};
+  user.readings.push(reading);
   localStorage.setItem("users",JSON.stringify(users));
   updatePersonalRecords(); updatePublicDashboard(); e.target.reset();
 });
 
-// ==================== On Page Load ====================
-if(currentUser){ 
-  document.getElementById("registerSection").style.display='none';
-  document.getElementById("loginSection").style.display='none';
-  document.getElementById("tabs").style.display='block';
+// ==================== On Load ====================
+if(currentUser){
+  document.getElementById("loginSection").style.display="none";
+  document.getElementById("registerSection").style.display="none";
+  document.getElementById("tabs").style.display="block";
   document.getElementById("currentUserDisplay").textContent=currentUser.username;
   document.getElementById("userRoleDisplay").textContent=currentUser.role;
-  if(currentUser.role==='admin'){ document.getElementById("adminTabBtn").style.display='inline-block'; document.getElementById("restoreTabBtn").style.display='inline-block'; updateAdminTable(); updateRestoreTable(); }
+  if(currentUser.role==='admin'){ document.getElementById("adminTabBtn").style.display='inline-block'; document.getElementById("restoreTabBtn").style.display='inline-block'; updateAdminTable(); updateRestoreTable();}
   showTab('dashboard'); updatePersonalRecords(); updatePublicDashboard();
 }
 </script>
