@@ -90,35 +90,26 @@ th{background:#007bff;color:#fff;}
 </section>
 
 <script>
-// ==================== Data Initialization & Upgrade ====================
-let rawUsers = localStorage.getItem("users");
-let rawCurrent = localStorage.getItem("currentUser");
-let users = JSON.parse(rawUsers || "[]");
-let revokedUsers = JSON.parse(localStorage.getItem("revokedUsers") || "[]");
-let currentUser = JSON.parse(rawCurrent || "null");
+// ==================== Data Initialization ====================
+let users = JSON.parse(localStorage.getItem("users")||"[]");
+let revokedUsers = JSON.parse(localStorage.getItem("revokedUsers")||"[]");
+let currentUser = JSON.parse(localStorage.getItem("currentUser")||"null");
 
-// Upgrade old users
-users = users.map(u => ({
-  username: u.username || "unknown",
-  password: u.password || "",
-  role: u.role || "user",
-  blocked: u.blocked !== undefined ? u.blocked : false,
-  readings: Array.isArray(u.readings) ? u.readings : []
-}));
-revokedUsers = revokedUsers.map(u => ({
-  username: u.username || "unknown",
-  password: u.password || "",
-  role: u.role || "user",
-  blocked: u.blocked !== undefined ? u.blocked : false,
-  readings: Array.isArray(u.readings) ? u.readings : []
+users = users.map(u=>({
+  username:u.username||"unknown",
+  password:u.password||"",
+  role:u.role||"user",
+  blocked:u.blocked||false,
+  readings:Array.isArray(u.readings)?u.readings:[]
 }));
 
-// Upgrade currentUser if string
-if(currentUser && typeof currentUser === "string"){
-  let found = users.find(u => u.username === currentUser);
-  if(found) currentUser = {username: found.username, role: found.role};
-  else currentUser = null;
-}
+revokedUsers = revokedUsers.map(u=>({
+  username:u.username||"unknown",
+  password:u.password||"",
+  role:u.role||"user",
+  blocked:u.blocked||false,
+  readings:Array.isArray(u.readings)?u.readings:[]
+}));
 
 localStorage.setItem("users", JSON.stringify(users));
 localStorage.setItem("revokedUsers", JSON.stringify(revokedUsers));
@@ -201,7 +192,6 @@ function updateAdminTable(){
   });
 }
 
-// ==================== Admin/User Functions ====================
 function saveBP(username,idx){
   const s=parseInt(document.getElementById(`systolic-${username}-${idx}`).value);
   const d=parseInt(document.getElementById(`diastolic-${username}-${idx}`).value);
@@ -212,6 +202,7 @@ function saveBP(username,idx){
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
 }
+
 function deleteBP(username,idx){
   if(!confirm("Delete this reading?")) return;
   const user=users.find(u=>u.username===username);
@@ -219,12 +210,14 @@ function deleteBP(username,idx){
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable(); updatePersonalRecords(); updatePublicDashboard();
 }
+
 function toggleBlock(username){
   const user=users.find(u=>u.username===username);
   user.blocked=!user.blocked;
   localStorage.setItem("users",JSON.stringify(users));
   updateAdminTable();
 }
+
 function revokeUser(username){
   const idx=users.findIndex(u=>u.username===username);
   if(idx===-1) return;
@@ -234,6 +227,7 @@ function revokeUser(username){
   localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
   updateAdminTable(); updateRestoreTable(); updatePublicDashboard();
 }
+
 function restoreUser(username){
   const idx=revokedUsers.findIndex(u=>u.username===username);
   if(idx===-1) return;
@@ -243,6 +237,7 @@ function restoreUser(username){
   localStorage.setItem("revokedUsers",JSON.stringify(revokedUsers));
   updateAdminTable(); updateRestoreTable(); updatePublicDashboard();
 }
+
 function updateRestoreTable(){
   const table=document.getElementById("restoreTable");
   table.innerHTML="<tr><th>Username</th><th>Role</th><th>Action</th></tr>";
