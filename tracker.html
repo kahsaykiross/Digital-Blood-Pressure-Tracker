@@ -87,8 +87,23 @@ canvas{max-width:100%;margin-top:20px;}
 </section>
 
 <script>
-let users = JSON.parse(localStorage.getItem("users")) || [];
-let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+// Safely initialize users and currentUser
+let users = [];
+let currentUser = null;
+
+try{
+    users = JSON.parse(localStorage.getItem("users")) || [];
+}catch(e){
+    users = [];
+    localStorage.removeItem("users");
+}
+
+try{
+    currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+}catch(e){
+    currentUser = null;
+    localStorage.removeItem("currentUser");
+}
 
 let avgBPChart, categoryChart, trendChart;
 
@@ -174,8 +189,10 @@ function updateCharts(){
 function updatePersonalRecords(){
     const table = document.getElementById("personalTable");
     table.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
+    if(!currentUser) return;
     const userObj = users.find(u=>u.username===currentUser.username);
-    userObj.readings?.forEach(r=>{
+    if(!userObj || !userObj.readings) return;
+    userObj.readings.forEach(r=>{
         table.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td><td>${r.category}</td></tr>`;
     });
 }
@@ -202,7 +219,7 @@ function populateUserDropdown() {
 function updateTrendChart(username){
     if(!username) return;
     const user = users.find(u => u.username === username);
-    if(!user || !user.readings.length) return;
+    if(!user || !user.readings || user.readings.length===0) return;
     const readings = [...user.readings].sort((a,b)=>new Date(a.date)-new Date(b.date));
     const labels = readings.map(r=>r.date);
     const systolicData = readings.map(r=>r.systolic);
@@ -275,6 +292,7 @@ document.getElementById("bpForm").addEventListener("submit", e=>{
     const d=parseInt(document.getElementById("diastolic").value);
     const userObj=users.find(x=>x.username===currentUser.username);
     const reading={date:new Date().toLocaleString(),systolic:s,diastolic:d,category:categorize(s,d)};
+    if(!userObj.readings) userObj.readings=[];
     userObj.readings.push(reading);
     localStorage.setItem("users",JSON.stringify(users));
     updatePersonalRecords();
