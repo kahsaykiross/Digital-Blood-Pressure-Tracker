@@ -6,8 +6,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; }
+  nav button { margin-right: 5px; padding: 5px 10px; }
   section { display:none; margin-top:20px; }
   table, th, td { border:1px solid black; border-collapse:collapse; padding:5px; }
+  table { width: 100%; }
+  th { background: #f0f0f0; }
 </style>
 </head>
 <body>
@@ -22,6 +25,7 @@
   <button onclick="showTab('publicSection')">Public</button>
 </nav>
 
+<!-- Login -->
 <section id="loginSection">
   <h3>Login</h3>
   <form id="loginForm">
@@ -31,6 +35,7 @@
   </form>
 </section>
 
+<!-- Register -->
 <section id="registerSection">
   <h3>Register</h3>
   <form id="registerForm">
@@ -40,6 +45,7 @@
   </form>
 </section>
 
+<!-- Tracker -->
 <section id="trackerSection">
   <h3>Record BP</h3>
   <form id="bpForm">
@@ -51,11 +57,13 @@
   <canvas id="bpChart" width="400" height="200"></canvas>
 </section>
 
+<!-- Admin -->
 <section id="adminSection">
   <h3>Admin Panel</h3>
   <table id="adminTable"><tr><th>User</th><th>Status</th><th>Action</th></tr></table>
 </section>
 
+<!-- Public -->
 <section id="publicSection">
   <h3>Public Records</h3>
   <select id="userSelect"></select>
@@ -77,130 +85,162 @@ window.onload = function() {
 
   // Navigation
   window.showTab = function(id) {
-    document.querySelectorAll("section").forEach(s=>s.style.display="none");
-    document.getElementById(id).style.display="block";
-    if(id==="trackerSection") renderTable();
-    if(id==="adminSection") renderAdmin();
-    if(id==="publicSection") renderPublic();
+    document.querySelectorAll("section").forEach(s => s.style.display = "none");
+    document.getElementById(id).style.display = "block";
+    if(id === "trackerSection" && currentUser) renderTable();
+    if(id === "adminSection") renderAdmin();
+    if(id === "publicSection") renderPublic();
   };
 
-  window.logout = function(){
+  window.logout = function() {
     currentUser = null;
     saveData();
     showTab("loginSection");
   };
 
   // Register
-  document.getElementById("registerForm").onsubmit = e=>{
+  document.getElementById("registerForm").onsubmit = e => {
     e.preventDefault();
-    let u=document.getElementById("regUser").value;
-    let p=document.getElementById("regPass").value;
-    if(users.find(x=>x.username===u)) return alert("User exists");
-    users.push({username:u,password:p,blocked:false});
-    records[u]=[];
+    let u = document.getElementById("regUser").value.trim();
+    let p = document.getElementById("regPass").value;
+    if(!u || !p) return alert("Fill all fields");
+    if(users.find(x => x.username === u)) return alert("User exists");
+    users.push({username:u, password:p, blocked:false});
+    records[u] = [];
     saveData();
     alert("Registered!");
+    document.getElementById("registerForm").reset();
   };
 
   // Login
-  document.getElementById("loginForm").onsubmit = e=>{
+  document.getElementById("loginForm").onsubmit = e => {
     e.preventDefault();
-    let u=document.getElementById("loginUser").value;
-    let p=document.getElementById("loginPass").value;
-    let user=users.find(x=>x.username===u && x.password===p);
-    if(!user) return alert("Invalid");
-    if(user.blocked) return alert("Blocked");
-    currentUser=user.username;
+    let u = document.getElementById("loginUser").value.trim();
+    let p = document.getElementById("loginPass").value;
+    let user = users.find(x => x.username === u && x.password === p);
+    if(!user) return alert("Invalid username or password");
+    if(user.blocked) return alert("User is blocked");
+    currentUser = user.username;
     saveData();
+    document.getElementById("loginForm").reset();
     showTab("trackerSection");
   };
 
   // Record BP
-  document.getElementById("bpForm").onsubmit = e=>{
+  document.getElementById("bpForm").onsubmit = e => {
     e.preventDefault();
     if(!currentUser) return alert("Login first");
-    let s=+document.getElementById("systolic").value;
-    let d=+document.getElementById("diastolic").value;
-    let rec={date:new Date().toLocaleString(),systolic:s,diastolic:d};
+    let s = +document.getElementById("systolic").value;
+    let d = +document.getElementById("diastolic").value;
+    if(!s || !d) return alert("Enter valid values");
+    let rec = {date: new Date().toLocaleString(), systolic: s, diastolic: d};
     records[currentUser].push(rec);
     saveData();
+    document.getElementById("bpForm").reset();
     renderTable();
   };
 
-  function renderTable(){
-    let t=document.getElementById("bpTable");
-    t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Action</th></tr>";
-    (records[currentUser]||[]).forEach((r,i)=>{
-      t.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td>
-      <td><button onclick="deleteBP(${i})">Delete</button></td></tr>`;
+  function renderTable() {
+    let t = document.getElementById("bpTable");
+    t.innerHTML = "<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Action</th></tr>";
+    (records[currentUser]||[]).forEach((r,i) => {
+      let row = t.insertRow();
+      row.insertCell(0).innerText = r.date;
+      row.insertCell(1).innerText = r.systolic;
+      row.insertCell(2).innerText = r.diastolic;
+      let actionCell = row.insertCell(3);
+      let delBtn = document.createElement("button");
+      delBtn.innerText = "Delete";
+      delBtn.onclick = () => { deleteBP(i); };
+      actionCell.appendChild(delBtn);
     });
     renderChart();
   }
 
-  function renderChart(){
-    let ctx=document.getElementById("bpChart");
-    let data=records[currentUser]||[];
-    let labels=data.map(r=>r.date);
-    let sys=data.map(r=>r.systolic);
-    let dia=data.map(r=>r.diastolic);
+  function renderChart() {
+    let ctx = document.getElementById("bpChart").getContext("2d");
+    let data = records[currentUser] || [];
+    let labels = data.map(r => r.date);
+    let sys = data.map(r => r.systolic);
+    let dia = data.map(r => r.diastolic);
     if(chart) chart.destroy();
-    chart=new Chart(ctx,{type:"line",
-      data:{labels,datasets:[
-        {label:"Systolic",data:sys,borderColor:"red"},
-        {label:"Diastolic",data:dia,borderColor:"blue"}
-      ]}});
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets:[
+          {label:"Systolic", data:sys, borderColor:"red", fill:false},
+          {label:"Diastolic", data:dia, borderColor:"blue", fill:false}
+        ]
+      },
+      options: { responsive:true }
+    });
   }
 
-  window.deleteBP=function(i){
+  window.deleteBP = function(i) {
     records[currentUser].splice(i,1);
     saveData();
     renderTable();
   };
 
-  function renderAdmin(){
-    let t=document.getElementById("adminTable");
-    t.innerHTML="<tr><th>User</th><th>Status</th><th>Action</th></tr>";
-    users.forEach(u=>{
-      t.innerHTML+=`<tr><td>${u.username}</td><td>${u.blocked?"Blocked":"Active"}</td>
-      <td><button onclick="toggleBlock('${u.username}')">${u.blocked?"Unblock":"Block"}</button>
-      <button onclick="revokeUser('${u.username}')">Revoke</button></td></tr>`;
+  function renderAdmin() {
+    let t = document.getElementById("adminTable");
+    t.innerHTML = "<tr><th>User</th><th>Status</th><th>Action</th></tr>";
+    users.forEach(u => {
+      let row = t.insertRow();
+      row.insertCell(0).innerText = u.username;
+      row.insertCell(1).innerText = u.blocked ? "Blocked" : "Active";
+      let actionCell = row.insertCell(2);
+      let blockBtn = document.createElement("button");
+      blockBtn.innerText = u.blocked ? "Unblock" : "Block";
+      blockBtn.onclick = () => { toggleBlock(u.username); };
+      let revokeBtn = document.createElement("button");
+      revokeBtn.innerText = "Revoke";
+      revokeBtn.style.marginLeft = "5px";
+      revokeBtn.onclick = () => { revokeUser(u.username); };
+      actionCell.appendChild(blockBtn);
+      actionCell.appendChild(revokeBtn);
     });
   }
 
-  window.toggleBlock=function(user){
-    let u=users.find(x=>x.username===user);
-    u.blocked=!u.blocked;
-    saveData(); renderAdmin();
+  window.toggleBlock = function(user) {
+    let u = users.find(x => x.username === user);
+    u.blocked = !u.blocked;
+    saveData(); 
+    renderAdmin();
   };
 
-  window.revokeUser=function(user){
-    users=users.filter(x=>x.username!==user);
-    delete records[user];
-    saveData(); renderAdmin();
+  window.revokeUser = function(user) {
+    if(confirm(`Are you sure to revoke ${user}?`)) {
+      users = users.filter(x => x.username !== user);
+      delete records[user];
+      if(currentUser === user) logout();
+      saveData(); 
+      renderAdmin();
+    }
   };
 
-  function renderPublic(){
-    let select=document.getElementById("userSelect");
-    select.innerHTML="";
-    users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
-    select.onchange=()=>{
-      let uname=select.value;
-      let t=document.getElementById("publicTable");
-      t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th></tr>";
-      (records[uname]||[]).forEach(r=>{
-        t.innerHTML+=`<tr><td>${r.date}</td><td>${r.systolic}</td><td>${r.diastolic}</td></tr>`;
+  function renderPublic() {
+    let select = document.getElementById("userSelect");
+    select.innerHTML = "";
+    users.forEach(u => select.innerHTML += `<option value="${u.username}">${u.username}</option>`);
+    select.onchange = () => {
+      let uname = select.value;
+      let t = document.getElementById("publicTable");
+      t.innerHTML = "<tr><th>Date</th><th>Systolic</th><th>Diastolic</th></tr>";
+      (records[uname]||[]).forEach(r => {
+        let row = t.insertRow();
+        row.insertCell(0).innerText = r.date;
+        row.insertCell(1).innerText = r.systolic;
+        row.insertCell(2).innerText = r.diastolic;
       });
     };
-    select.onchange();
+    if(users.length > 0) select.onchange();
   }
 
-  // Show login/register if no one logged in
-  if (!currentUser) {
-    document.getElementById("loginSection").style.display = "block";
-    document.getElementById("registerSection").style.display = "block";
-  } else {
-    showTab("trackerSection");
-  }
+  // Initial Tab
+  if(!currentUser) showTab("loginSection");
+  else showTab("trackerSection");
 };
 </script>
 </body>
