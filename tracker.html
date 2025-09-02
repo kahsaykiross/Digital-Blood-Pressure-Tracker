@@ -165,9 +165,11 @@ window.onload = function() {
       row.insertCell(0).innerText=r.date;
       row.insertCell(1).innerText=r.systolic;
       row.insertCell(2).innerText=r.diastolic;
+
       let catCell=row.insertCell(3);
       catCell.innerText=r.category;
-      catCell.style.color=getCategoryColor(r.category); // color-coded
+      catCell.style.color=getCategoryColor(r.category);
+
       let actionCell=row.insertCell(4);
       let delBtn=document.createElement("button");
       delBtn.innerText="Delete";
@@ -190,8 +192,8 @@ window.onload = function() {
       data:{
         labels,
         datasets:[
-          {label:"Systolic", data:sys, borderColor:"red", backgroundColor:colors, fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6},
-          {label:"Diastolic", data:dia, borderColor:"blue", backgroundColor:colors, fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6}
+          {label:"Systolic", data:sys, borderColor:"red", fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6},
+          {label:"Diastolic", data:dia, borderColor:"blue", fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6}
         ]
       },
       options:{responsive:true, plugins:{legend:{position:'top'}}}
