@@ -122,7 +122,6 @@ section { margin-bottom:20px; }
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-
   const bpForm = document.getElementById("bpForm");
   const bpTable = document.getElementById("bpTable");
   const latestSystolic = document.getElementById("latestSystolic");
@@ -154,12 +153,10 @@ document.addEventListener("DOMContentLoaded", function(){
     bpReadings.forEach(r=>{
       bpTable.innerHTML += `<tr><td>${r.date}</td><td>${r.user}</td><td>${r.systolic}</td><td>${r.diastolic}</td><td>${r.category}</td></tr>`;
     });
-
     if(bpReadings.length>0){
       const last = bpReadings[bpReadings.length-1];
       const avgS = (bpReadings.reduce((sum,r)=>sum+r.systolic,0)/bpReadings.length).toFixed(1);
       const avgD = (bpReadings.reduce((sum,r)=>sum+r.diastolic,0)/bpReadings.length).toFixed(1);
-
       latestSystolic.textContent = last.systolic;
       latestDiastolic.textContent = last.diastolic;
       averageBP.textContent = `${avgS}/${avgD}`;
@@ -167,7 +164,6 @@ document.addEventListener("DOMContentLoaded", function(){
       latestDiastolic.style.color = getBPColor(last.systolic,last.diastolic);
       averageBP.style.color = getBPColor(avgS,avgD);
     }
-
     bpChart.data.labels = bpReadings.map(r=>r.date+" ("+r.user+")");
     bpChart.data.datasets = [
       { label:"Systolic", data:bpReadings.map(r=>r.systolic), borderColor:"red", fill:false, pointBackgroundColor:bpReadings.map(r=>getBPColor(r.systolic,r.diastolic)), tension:0.2 },
@@ -239,6 +235,5 @@ document.addEventListener("DOMContentLoaded", function(){
 
 });
 </script>
-
 </body>
 </html>
