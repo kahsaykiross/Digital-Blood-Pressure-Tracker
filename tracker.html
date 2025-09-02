@@ -3,36 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <title>Digital Blood Pressure Tracker</title>
-<link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="tracker.js" defer></script>
 <style>
 body { font-family: Arial, sans-serif; margin:20px; background:#f8f9fa; }
 h2 { text-align:center; margin-bottom:20px; }
 
-/* Dashboard cards */
 .dashboard-cards { display:flex; flex-wrap:wrap; justify-content:space-around; gap:15px; margin-bottom:20px; }
-.card { flex:1 1 150px; background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); text-align:center; transition:0.2s; }
-.card:hover { transform:translateY(-5px); }
+.card { flex:1 1 150px; background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); text-align:center; }
 .card h4 { margin-bottom:10px; color:#555; }
 #latestSystolic,#latestDiastolic,#averageBP { font-weight:bold; font-size:1.2em; transition:color 0.5s; }
 
-/* Chart */
 #bpChart { background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
 
-/* Table */
 table { width:100%; border-collapse:collapse; margin-bottom:30px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 4px 8px rgba(0,0,0,0.05); }
 th, td { padding:12px 15px; text-align:center; border-bottom:1px solid #ddd; }
 th { background:#007bff; color:#fff; }
 tr:nth-child(even) { background:#f1f1f1; }
 
-/* Forms */
 form { background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.05); margin-bottom:30px; max-width:400px; margin:auto; }
 input,button { padding:10px; margin:5px 0; width:100%; border-radius:8px; border:1px solid #ccc; }
 button { background:#007bff; color:#fff; border:none; cursor:pointer; font-weight:bold; }
 button:hover { background:#0056b3; }
 
-/* Doctoral advice */
 #bp-advice { background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.05); margin-bottom:30px; }
 #bp-advice h3 { margin-top:15px; }
 </style>
@@ -64,3 +57,66 @@ button:hover { background:#0056b3; }
     <tr><th>Date</th><th>User</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>
   </table>
 </section>
+
+<!-- DOCTORAL ADVICE -->
+<section id="bp-advice">
+  <h2>Doctoral Advice & Lifestyle Recommendations</h2>
+  <h3>🥗 Healthy Diet</h3>
+  <ul>
+    <li>DASH diet: fruits, vegetables, whole grains, low-fat dairy.</li>
+    <li>Reduce sodium intake & limit processed foods.</li>
+  </ul>
+  <h3>🏃 Physical Activity</h3>
+  <ul>
+    <li>150 min/week aerobic + 2–3 strength sessions.</li>
+  </ul>
+  <h3>⚖️ Weight Management</h3>
+  <ul>
+    <li>Maintain healthy BMI; 5–10% weight loss reduces BP.</li>
+  </ul>
+  <h3>🧘 Stress Management</h3>
+  <ul>
+    <li>Mindfulness, yoga, meditation, adequate sleep.</li>
+  </ul>
+  <h3>🚭 Avoid Harmful Habits</h3>
+  <ul>
+    <li>Quit smoking, limit alcohol, avoid excessive caffeine.</li>
+  </ul>
+  <h3>📈 Regular Monitoring</h3>
+  <ul>
+    <li>Track BP daily or weekly; consult a doctor for abnormal readings.</li>
+  </ul>
+</section>
+
+<!-- REGISTER -->
+<section id="registerSection">
+  <h3>Register</h3>
+  <form id="registerForm">
+    <input type="text" id="regUsername" placeholder="Username" required>
+    <input type="password" id="regPassword" placeholder="Password" required>
+    <button type="submit">Register</button>
+  </form>
+</section>
+
+<!-- LOGIN -->
+<section id="loginSection">
+  <h3>Login to Record BP</h3>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+</section>
+
+<!-- RECORD -->
+<section id="recordSection" style="display:none;">
+  <h3>Add New Reading</h3>
+  <button id="logoutBtn">Logout</button>
+  <form id="bpForm">
+    <input type="number" id="systolic" placeholder="Systolic" required>
+    <input type="number" id="diastolic" placeholder="Diastolic" required>
+    <button type="submit">Add Reading</button>
+  </form>
+</section>
+</body>
+</html>
