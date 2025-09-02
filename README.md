@@ -5,105 +5,182 @@ A Digital Blood Pressure Tracker is a health monitoring tool that allows users t
 **Author:** Kahsay Kiross Meresa
 **Date:** August 31, 2025
 **SDG Alignment:** SDG 3 - Good Health and Well-Being
+Digital Blood Pressure Tracker (Admin & User)
+Overview
 
----
+This is a web-based Blood Pressure Tracker that allows users to record, view, and monitor their blood pressure readings over time. It includes personal record management, public dashboards, and admin controls such as editing, deleting, blocking, and revoking users. All data is stored locally using localStorage.
 
-## Project Overview
+Features
+User Features
 
-The Digital Blood Pressure Tracker is a web-based application designed to help users monitor and record their blood pressure readings over time. This tool aims to promote health awareness and support well-being by providing users with a simple way to track their blood pressure trends.
+Register and login with username and password.
 
----
+Record blood pressure readings (systolic and diastolic).
 
-## Features
+View personal records and historical trends.
 
-* User registration and login system.
-* Secure password storage.
-* Add, view, and track blood pressure readings.
-* Classification of blood pressure readings (Normal, Elevated, High).
-* Data visualization for trends over time.
+Track BP categories: Normal, Elevated, Hypertension.
 
----
+View public dashboard showing all users' average readings and category distributions.
 
-## Folder Structure
+Responsive charts powered by Chart.js.
 
-```
-BloodPressureTracker/
-│
-├─ index.html          (Redirects to login.html)
-├─ login.html
-├─ register.html
-├─ tracker.html
-│
-├─ style.css
-├─ register.js
-├─ login.js
-├─ tracker.js
-│
-├─ register.php
-├─ login.php
-├─ save_reading.php
-│
-└─ sql/
-   └─ BloodPressureDB.sql
-```
+Admin Features
 
----
+Access the Admin Panel to manage all users’ readings.
 
-## Technologies Used
+Edit or delete any user's blood pressure records.
 
-* **Frontend:** HTML, CSS, JavaScript
-* **Backend:** PHP
-* **Database:** MySQL
-* **Server:** XAMPP (for local development) or cPanel hosting (for live deployment)
+Block/unblock users to restrict access.
 
----
+Revoke users, moving them to a "Revoked Users" section.
 
-## Installation and Deployment
+Restore revoked users when needed.
 
-### Local Deployment (XAMPP)
+View all users' records and charts in real-time.
 
-1. Install XAMPP: [https://www.apachefriends.org](https://www.apachefriends.org)
-2. Start Apache and MySQL via XAMPP Control Panel.
-3. Create the database `BloodPressureDB` in phpMyAdmin and import `sql/BloodPressureDB.sql`.
-4. Copy the project folder to `C:\xampp\htdocs\`.
-5. Update PHP files (`register.php`, `login.php`, `save_reading.php`) to use:
+Data Security & Privacy
 
-```php
-$conn = new mysqli("localhost", "root", "", "BloodPressureDB");
-```
+Personal readings are only visible to the respective user.
 
-6. Access the application at `http://localhost/BloodPressureTracker/index.html`.
+Admin can view and manage all users’ data.
 
-### Live Server Deployment (cPanel Hosting)
+All data is persisted in the browser's localStorage.
 
-1. Upload the project folder to `public_html` using FTP or File Manager.
-2. Create a MySQL database and user in cPanel.
-3. Import `BloodPressureDB.sql` into the database using phpMyAdmin.
-4. Update PHP files with live database credentials.
-5. Enable HTTPS using Let’s Encrypt (recommended).
-6. Access the application via your domain.
+Installation & Usage
 
----
+Download or clone the repository.
 
-## Usage
+Open index.html in a modern web browser (Chrome, Firefox, Edge).
 
-1. Register a new account.
-2. Login with your credentials.
-3. Add your blood pressure readings.
-4. View and monitor trends over time.
-5. Logout when finished.
+Register a user:
 
----
+Select role: User or Admin.
 
-## Best Practices
+Login with your credentials.
 
-* Use strong and secure passwords.
-* Regularly backup the database.
-* Sanitize and validate all input to prevent SQL injection.
-* Use HTTPS on live servers to secure user data.
+Navigate using the tabs:
 
----
+Dashboard: View public statistics and trends.
 
-## License
+My Records: Add and view personal readings.
 
-This project is open-source and available for educational and personal use.
+Admin Panel (Admin only): Manage users and records.
+
+Restore Users (Admin only): Restore revoked users.
+
+Quick Start Guide
+1. Open the Tracker
+
+Open index.html in any modern browser.
+
+No installation or server setup required.
+
+2. Register a New Account
+
+Go to Register section.
+
+Enter Username and Password.
+
+Select Role (User or Admin).
+
+Click Register.
+
+A confirmation alert will appear: "Registered! Now login."
+
+3. Login
+
+Go to Login section.
+
+Enter Username and Password.
+
+Click Login.
+
+Tabs appear according to role:
+
+Dashboard → Public stats & charts.
+
+My Records → Add/view personal readings.
+
+Admin Panel (admin only) → Manage all users.
+
+Restore Users (admin only) → Restore revoked users.
+
+4. Add Blood Pressure Readings (User)
+
+Navigate to My Records tab.
+
+Enter Systolic and Diastolic values.
+
+Click Add Reading.
+
+Readings appear in personal table and update the public dashboard automatically.
+
+5. Admin Management
+
+Go to Admin Panel:
+
+Edit or save any user’s readings.
+
+Delete readings.
+
+Block/unblock users.
+
+Revoke users (move to Restore Users).
+
+Go to Restore Users to restore any revoked account.
+
+6. Viewing Charts
+
+Average BP per User: Shows average systolic & diastolic BP per user.
+
+BP Category Distribution: Pie chart of Normal, Elevated, Hypertension readings.
+
+User Trend Over Time: Select a user to view BP trends.
+
+7. Logout
+
+Click Logout button to safely exit your account.
+
+How It Works
+
+Data Storage: Users, readings, and admin actions stored in localStorage.
+
+BP Categorization:| Category         | Systolic (mmHg) | Diastolic (mmHg) | Description                                      |
+| ---------------- | --------------- | ---------------- | ------------------------------------------------ |
+| **Normal**       | < 120           | < 80             | Healthy BP range; no immediate concern.          |
+| **Elevated**     | 120 – 129       | < 80             | Slightly higher than normal; monitor regularly.  |
+| **Hypertension** | ≥ 130           | ≥ 80             | High blood pressure; may require medical advice. |
+
+System Flow Diagram
+         ┌─────────────┐
+         │   Browser   │
+         │ HTML + JS   │
+         └─────┬──────┘
+               │
+        ┌──────┴──────┐
+        │ localStorage│
+        │  Users &    │
+        │  Readings   │
+        └──────┬──────┘
+               │
+    ┌──────────┴──────────┐
+    │  Dashboard & Charts │
+    │  - Public Stats     │
+    │  - User Trends      │
+    └──────────┬──────────┘
+               │
+    ┌──────────┴──────────┐
+    │      Admin Panel     │
+    │  - Edit/Delete Read  │
+    │  - Block/Unblock     │
+    │  - Revoke/Restore    │
+    └─────────────────────┘
+
+
+
+
+
+
+
+
