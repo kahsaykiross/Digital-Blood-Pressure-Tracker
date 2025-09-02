@@ -179,6 +179,7 @@ document.addEventListener("DOMContentLoaded", function(){
     e.preventDefault();
     const u = document.getElementById("regUsername").value.trim();
     const p = document.getElementById("regPassword").value.trim();
+    if(!u || !p){ alert("Enter username & password"); return; }
     if(users.find(user=>user.username===u)){ alert("Username exists"); return; }
     users.push({username:u,password:p,readings:[]});
     localStorage.setItem("users", JSON.stringify(users));
@@ -232,7 +233,6 @@ document.addEventListener("DOMContentLoaded", function(){
     registerSection.style.display = "none";
     recordSection.style.display = "block";
   }
-
 });
 </script>
 </body>
