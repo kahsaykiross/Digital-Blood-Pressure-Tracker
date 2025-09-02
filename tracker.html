@@ -121,7 +121,6 @@ section { margin-bottom:20px; }
 </section>
 
 <script>
-// Wait until DOM is fully loaded
 document.addEventListener("DOMContentLoaded", function(){
 
   const bpForm = document.getElementById("bpForm");
@@ -157,16 +156,16 @@ document.addEventListener("DOMContentLoaded", function(){
     });
 
     if(bpReadings.length>0){
-      const last=bpReadings[bpReadings.length-1];
-      const avgS=(bpReadings.reduce((sum,r)=>sum+r.systolic,0)/bpReadings.length).toFixed(1);
-      const avgD=(bpReadings.reduce((sum,r)=>sum+r.diastolic,0)/bpReadings.length).toFixed(1);
+      const last = bpReadings[bpReadings.length-1];
+      const avgS = (bpReadings.reduce((sum,r)=>sum+r.systolic,0)/bpReadings.length).toFixed(1);
+      const avgD = (bpReadings.reduce((sum,r)=>sum+r.diastolic,0)/bpReadings.length).toFixed(1);
 
-      latestSystolic.textContent=last.systolic;
-      latestDiastolic.textContent=last.diastolic;
-      averageBP.textContent=`${avgS}/${avgD}`;
-      latestSystolic.style.color=getBPColor(last.systolic,last.diastolic);
-      latestDiastolic.style.color=getBPColor(last.systolic,last.diastolic);
-      averageBP.style.color=getBPColor(avgS,avgD);
+      latestSystolic.textContent = last.systolic;
+      latestDiastolic.textContent = last.diastolic;
+      averageBP.textContent = `${avgS}/${avgD}`;
+      latestSystolic.style.color = getBPColor(last.systolic,last.diastolic);
+      latestDiastolic.style.color = getBPColor(last.systolic,last.diastolic);
+      averageBP.style.color = getBPColor(avgS,avgD);
     }
 
     bpChart.data.labels = bpReadings.map(r=>r.date+" ("+r.user+")");
