@@ -2,72 +2,145 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tracker - Blood Pressure Tracker</title>
+<title>Digital Blood Pressure Tracker</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="tracker.js" defer></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f8f9fa;
+  }
+  h2 { color: #333; text-align: center; margin-bottom: 20px; }
+
+  /* Dashboard cards */
+  .dashboard-cards {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    gap: 15px;
+  }
+  .card {
+    flex: 1 1 150px;
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .card:hover { transform: translateY(-5px); }
+  .card h4 { margin-bottom: 10px; color: #555; }
+  #latestSystolic, #latestDiastolic, #averageBP {
+    font-weight: bold;
+    font-size: 1.2em;
+    transition: color 0.5s ease;
+  }
+
+  /* Chart */
+  #bpChart {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  }
+  th, td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+  }
+  th { background: #007bff; color: #fff; }
+  tr:nth-child(even) { background: #f1f1f1; }
+
+  /* Forms */
+  form {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  input, button {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover { background: #0056b3; }
+</style>
 </head>
 <body>
-<h2>Blood Pressure Tracker</h2>
+  <h2>📊 Digital Blood Pressure Tracker</h2>
 
-<div>
-  <button id="logoutBtn">Logout</button>
-</div>
+  <!-- DASHBOARD SECTION -->
+  <section id="dashboard">
+    <div class="dashboard-cards">
+      <div class="card">
+        <h4>Latest Systolic</h4>
+        <p id="latestSystolic">--</p>
+      </div>
+      <div class="card">
+        <h4>Latest Diastolic</h4>
+        <p id="latestDiastolic">--</p>
+      </div>
+      <div class="card">
+        <h4>Average BP</h4>
+        <p id="averageBP">--</p>
+      </div>
+    </div>
 
-<form id="bpForm">
-  <input type="number" id="systolic" placeholder="Systolic" required>
-  <input type="number" id="diastolic" placeholder="Diastolic" required>
-  <button type="submit">Add Reading</button>
-</form>
+    <canvas id="bpChart" width="400" height="200"></canvas>
 
-<h3>Your Readings</h3>
-<table id="bpTable">
-  <tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>
-</table>
+    <h3>All Readings</h3>
+    <table id="bpTable">
+      <tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>
+    </table>
+  </section>
 
-<!-- Doctoral Advice & Lifestyle Recommendations -->
-<section id="bp-advice">
-  <h2>Doctoral Advice & Lifestyle Recommendations</h2>
-  <p>Managing your blood pressure is crucial for cardiovascular health. Below are evidence-based recommendations:</p>
+  <!-- LOGIN FORM -->
+  <section id="loginSection">
+    <h3>Login to Record BP</h3>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+  </section>
 
-  <h3><span class="badge diet">🥗</span> Healthy Diet</h3>
-  <ul>
-    <li>Follow a <strong>DASH diet</strong> (Dietary Approaches to Stop Hypertension) rich in fruits, vegetables, whole grains, and low-fat dairy.</li>
-    <li>Reduce sodium intake to < 2,300 mg/day (or < 1,500 mg/day if hypertensive).</li>
-    <li>Limit processed foods and sugary drinks.</li>
-  </ul>
-
-  <h3><span class="badge exercise">🏃</span> Physical Activity</h3>
-  <ul>
-    <li>Engage in at least 150 minutes/week of moderate-intensity aerobic exercise.</li>
-    <li>Include strength training 2–3 times per week.</li>
-  </ul>
-
-  <h3><span class="badge weight">⚖️</span> Weight Management</h3>
-  <ul>
-    <li>Maintain a healthy BMI (18.5–24.9).</li>
-    <li>Even a 5–10% weight reduction can significantly lower blood pressure.</li>
-  </ul>
-
-  <h3><span class="badge stress">🧘</span> Stress Management</h3>
-  <ul>
-    <li>Practice mindfulness, meditation, or yoga regularly.</li>
-    <li>Ensure adequate sleep (7–9 hours per night).</li>
-  </ul>
-
-  <h3><span class="badge habits">🚭</span> Avoid Harmful Habits</h3>
-  <ul>
-    <li>Quit smoking and limit alcohol consumption.</li>
-    <li>Avoid excessive caffeine if sensitive to blood pressure changes.</li>
-  </ul>
-
-  <h3><span class="badge monitor">📈</span> Regular Monitoring</h3>
-  <ul>
-    <li>Track your blood pressure daily or weekly.</li>
-    <li>Consult a healthcare professional if systolic < 90 mmHg or diastolic < 60 mmHg with symptoms.</li>
-  </ul>
-
-  <p><em>Note:</em> These recommendations are general and do not replace individualized medical advice. Always consult your physician for personalized care.</p>
-</section>
-
+  <!-- RECORD FORM -->
+  <section id="recordSection" style="display:none;">
+    <h3>Add New Reading</h3>
+    <button id="logoutBtn">Logout</button>
+    <form id="bpForm">
+      <input type="number" id="systolic" placeholder="Systolic" required>
+      <input type="number" id="diastolic" placeholder="Diastolic" required>
+      <button type="submit">Add Reading</button>
+    </form>
+  </section>
 </body>
 </html>
