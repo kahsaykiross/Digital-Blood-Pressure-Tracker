@@ -25,7 +25,6 @@
   <button onclick="showTab('publicSection')">Public</button>
 </nav>
 
-<!-- Login Section -->
 <section id="loginSection">
   <h3>Login</h3>
   <form id="loginForm">
@@ -35,18 +34,15 @@
   </form>
 </section>
 
-<!-- Register Section -->
 <section id="registerSection">
   <h3>Register</h3>
   <form id="registerForm">
     <input id="regUser" placeholder="Username" required>
     <input type="password" id="regPass" placeholder="Password" required>
-    <label><input type="checkbox" id="regAdmin"> Admin</label>
     <button type="submit">Register</button>
   </form>
 </section>
 
-<!-- Tracker Section -->
 <section id="trackerSection">
   <h3>Record BP</h3>
   <form id="bpForm">
@@ -60,7 +56,6 @@
   <canvas id="bpChart" width="400" height="200"></canvas>
 </section>
 
-<!-- Admin Section -->
 <section id="adminSection">
   <h3>Admin Panel</h3>
   <div id="adminSummary" style="margin-bottom:10px;"></div>
@@ -70,7 +65,6 @@
   </table>
 </section>
 
-<!-- Public Section -->
 <section id="publicSection">
   <h3>Public Records</h3>
   <div id="publicSummary" style="margin-bottom:10px;"></div>
@@ -93,6 +87,7 @@ window.onload = function() {
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
   }
 
+  // --- BP Category Functions ---
   function getBPCategory(s,d){
     if(s>=180 || d>=120) return "Hypertensive Crisis";
     if(s>=140 || d>=90) return "Hypertension Stage 2";
@@ -112,7 +107,15 @@ window.onload = function() {
     }
   }
 
-  // Navigation
+  // --- Auto-add category to old records ---
+  for (let user in records) {
+    records[user].forEach(r => {
+      if(!r.category) r.category = getBPCategory(r.systolic, r.diastolic);
+    });
+  }
+  saveData();
+
+  // --- Navigation ---
   window.showTab = function(id){
     document.querySelectorAll("section").forEach(s=>s.style.display="none");
     document.getElementById(id).style.display="block";
@@ -121,28 +124,27 @@ window.onload = function() {
     if(id==="publicSection") renderPublic();
   };
 
-  window.logout=function(){
+  window.logout = function(){
     currentUser=null;
     saveData();
     showTab("loginSection");
   };
 
-  // Register
+  // --- Register ---
   document.getElementById("registerForm").onsubmit = e=>{
     e.preventDefault();
     let u=document.getElementById("regUser").value.trim();
     let p=document.getElementById("regPass").value;
-    let isAdmin=document.getElementById("regAdmin").checked;
-    if(!u||!p) return alert("Fill all fields");
+    if(!u || !p) return alert("Fill all fields");
     if(users.find(x=>x.username===u)) return alert("User exists");
-    users.push({username:u,password:p,blocked:false,isAdmin:isAdmin});
+    users.push({username:u,password:p,blocked:false});
     records[u]=[];
     saveData();
     alert("Registered!");
     document.getElementById("registerForm").reset();
   };
 
-  // Login
+  // --- Login ---
   document.getElementById("loginForm").onsubmit = e=>{
     e.preventDefault();
     let u=document.getElementById("loginUser").value.trim();
@@ -153,19 +155,18 @@ window.onload = function() {
     currentUser=user.username;
     saveData();
     document.getElementById("loginForm").reset();
-    if(user.isAdmin) showTab("adminSection");
-    else showTab("trackerSection");
+    showTab("trackerSection");
   };
 
-  // Record BP
+  // --- Record BP ---
   document.getElementById("bpForm").onsubmit = e=>{
     e.preventDefault();
     if(!currentUser) return alert("Login first");
     let s=+document.getElementById("systolic").value;
     let d=+document.getElementById("diastolic").value;
-    if(!s||!d) return alert("Enter valid values");
+    if(!s || !d) return alert("Enter valid values");
     let category=getBPCategory(s,d);
-    let rec={date:new Date().toLocaleString(),systolic:s,diastolic:d,category:category};
+    let rec={date:new Date().toLocaleString(), systolic:s, diastolic:d, category};
     records[currentUser].push(rec);
     saveData();
     document.getElementById("bpForm").reset();
@@ -173,7 +174,7 @@ window.onload = function() {
     renderPublicInline();
   };
 
-  // Tracker Table & Chart
+  // --- Tracker Table & Chart ---
   function renderTable(){
     let t=document.getElementById("bpTable");
     t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th><th>Action</th></tr>";
@@ -201,39 +202,17 @@ window.onload = function() {
     let sys=data.map(r=>r.systolic);
     let dia=data.map(r=>r.diastolic);
     let colors=data.map(r=>getCategoryColor(r.category));
-
     if(chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Systolic',
-            data: sys,
-            fill: false,
-            tension: 0.1,
-            segment: {
-              borderColor: ctx => colors[ctx.p0DataIndex]
-            },
-            pointBackgroundColor: colors,
-            pointRadius: 6,
-          },
-          {
-            label: 'Diastolic',
-            data: dia,
-            fill: false,
-            tension: 0.1,
-            segment: {
-              borderColor: ctx => colors[ctx.p0DataIndex]
-            },
-            pointBackgroundColor: colors,
-            pointRadius: 6,
-          }
+    chart=new Chart(ctx,{
+      type:"line",
+      data:{
+        labels,
+        datasets:[
+          {label:"Systolic", data:sys, borderColor:"red", fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6},
+          {label:"Diastolic", data:dia, borderColor:"blue", fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6}
         ]
       },
-      options: { responsive:true, plugins:{legend:{position:'top'}} }
+      options:{responsive:true, plugins:{legend:{position:'top'}}}
     });
   }
 
@@ -244,20 +223,19 @@ window.onload = function() {
     renderPublicInline();
   };
 
-  // Admin Panel
+  // --- Admin Panel ---
   function renderAdmin(){
     let t=document.getElementById("adminTable");
-    t.innerHTML = "<tr><th>User</th><th>Status</th><th>Action</th></tr>";
+    t.innerHTML="<tr><th>User</th><th>Status</th><th>Action</th></tr>";
 
-    let counts = {Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
+    let counts={Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
     let total=0;
-    users.forEach(u => {
-      (records[u.username] || []).forEach(r => {
-        counts[r.category] = (counts[r.category] || 0) + 1;
+    users.forEach(u=>{
+      (records[u.username]||[]).forEach(r=>{
+        counts[r.category]=(counts[r.category]||0)+1;
         total++;
       });
     });
-
     document.getElementById("adminSummary").innerHTML = `
       <b>Total Records:</b> ${total} &nbsp;
       <b>Normal:</b> ${counts["Normal"]} &nbsp;
@@ -269,19 +247,15 @@ window.onload = function() {
     // Pie chart
     let pieCtx=document.getElementById("adminPieChart").getContext("2d");
     if(adminPieChart) adminPieChart.destroy();
-    adminPieChart = new Chart(pieCtx,{
+    adminPieChart=new Chart(pieCtx,{
       type:'pie',
       data:{
-        labels: Object.keys(counts),
-        datasets:[{
-          data: Object.values(counts),
-          backgroundColor: Object.keys(counts).map(k=>getCategoryColor(k))
-        }]
+        labels:Object.keys(counts),
+        datasets:[{data:Object.values(counts), backgroundColor:Object.keys(counts).map(k=>getCategoryColor(k))}]
       },
       options:{responsive:true, plugins:{legend:{position:'top'}}}
     });
 
-    // User table
     users.forEach(u=>{
       let row=t.insertRow();
       row.insertCell(0).innerText=u.username;
@@ -314,12 +288,12 @@ window.onload = function() {
     }
   };
 
-  // Public Section
+  // --- Public Section ---
   function renderPublic(){
     let select=document.getElementById("userSelect");
     select.innerHTML="";
     users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
-    select.onchange = renderPublicInline;
+    select.onchange=renderPublicInline;
     if(users.length>0) select.onchange();
   }
 
@@ -331,7 +305,7 @@ window.onload = function() {
     let t=document.getElementById("publicTable");
     t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
 
-    let counts = {Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
+    let counts={Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
     userRecords.forEach(r=>{
       counts[r.category]=(counts[r.category]||0)+1;
       let row=t.insertRow();
@@ -353,12 +327,9 @@ window.onload = function() {
       <b>Hypertensive Crisis:</b> ${counts["Hypertensive Crisis"]}`;
   }
 
+  // --- Initial Tab ---
   if(!currentUser) showTab("loginSection");
-  else {
-    let userObj=users.find(u=>u.username===currentUser);
-    if(userObj && userObj.isAdmin) showTab("adminSection");
-    else showTab("trackerSection");
-  }
+  else showTab("trackerSection");
 };
 </script>
 </body>
