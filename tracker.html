@@ -170,7 +170,7 @@ window.onload = function() {
     saveData();
     document.getElementById("bpForm").reset();
     renderTable();
-    renderPublicInline(); // update public section inline
+    renderPublicInline();
   };
 
   // Tracker Table & Chart
@@ -201,17 +201,39 @@ window.onload = function() {
     let sys=data.map(r=>r.systolic);
     let dia=data.map(r=>r.diastolic);
     let colors=data.map(r=>getCategoryColor(r.category));
+
     if(chart) chart.destroy();
-    chart=new Chart(ctx,{
-      type:"line",
-      data:{
-        labels,
-        datasets:[
-          {label:"Systolic", data:sys, borderColor:"red", fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6},
-          {label:"Diastolic", data:dia, borderColor:"blue", fill:false, tension:0.1, pointBackgroundColor:colors, pointRadius:6}
+
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Systolic',
+            data: sys,
+            fill: false,
+            tension: 0.1,
+            segment: {
+              borderColor: ctx => colors[ctx.p0DataIndex]
+            },
+            pointBackgroundColor: colors,
+            pointRadius: 6,
+          },
+          {
+            label: 'Diastolic',
+            data: dia,
+            fill: false,
+            tension: 0.1,
+            segment: {
+              borderColor: ctx => colors[ctx.p0DataIndex]
+            },
+            pointBackgroundColor: colors,
+            pointRadius: 6,
+          }
         ]
       },
-      options:{responsive:true, plugins:{legend:{position:'top'}}}
+      options: { responsive:true, plugins:{legend:{position:'top'}} }
     });
   }
 
@@ -225,17 +247,18 @@ window.onload = function() {
   // Admin Panel
   function renderAdmin(){
     let t=document.getElementById("adminTable");
-    t.innerHTML="<tr><th>User</th><th>Status</th><th>Action</th></tr>";
+    t.innerHTML = "<tr><th>User</th><th>Status</th><th>Action</th></tr>";
 
-    let counts={Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
+    let counts = {Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
     let total=0;
-    users.forEach(u=>{
-      (records[u.username]||[]).forEach(r=>{
-        counts[r.category]=(counts[r.category]||0)+1;
+    users.forEach(u => {
+      (records[u.username] || []).forEach(r => {
+        counts[r.category] = (counts[r.category] || 0) + 1;
         total++;
       });
     });
-    document.getElementById("adminSummary").innerHTML=`
+
+    document.getElementById("adminSummary").innerHTML = `
       <b>Total Records:</b> ${total} &nbsp;
       <b>Normal:</b> ${counts["Normal"]} &nbsp;
       <b>Elevated:</b> ${counts["Elevated"]} &nbsp;
@@ -243,21 +266,22 @@ window.onload = function() {
       <b>Hypertension Stage 2:</b> ${counts["Hypertension Stage 2"]} &nbsp;
       <b>Hypertensive Crisis:</b> ${counts["Hypertensive Crisis"]}`;
 
-    // Pie Chart
-    let ctx=document.getElementById("adminPieChart").getContext("2d");
+    // Pie chart
+    let pieCtx=document.getElementById("adminPieChart").getContext("2d");
     if(adminPieChart) adminPieChart.destroy();
-    adminPieChart=new Chart(ctx,{
+    adminPieChart = new Chart(pieCtx,{
       type:'pie',
       data:{
-        labels:Object.keys(counts),
+        labels: Object.keys(counts),
         datasets:[{
-          data:Object.values(counts),
-          backgroundColor:["#28a745","#ffc107","#fd7e14","#dc3545","#800000"]
+          data: Object.values(counts),
+          backgroundColor: Object.keys(counts).map(k=>getCategoryColor(k))
         }]
       },
-      options:{responsive:true, plugins:{legend:{position:'right'}}}
+      options:{responsive:true, plugins:{legend:{position:'top'}}}
     });
 
+    // User table
     users.forEach(u=>{
       let row=t.insertRow();
       row.insertCell(0).innerText=u.username;
@@ -293,47 +317,48 @@ window.onload = function() {
   // Public Section
   function renderPublic(){
     let select=document.getElementById("userSelect");
-    let summaryDiv=document.getElementById("publicSummary");
     select.innerHTML="";
     users.forEach(u=>select.innerHTML+=`<option value="${u.username}">${u.username}</option>`);
-
-    function updateTable(){
-      let uname=select.value;
-      let userRecords=records[uname]||[];
-      let t=document.getElementById("publicTable");
-      t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
-      let counts={Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
-      userRecords.forEach(r=>{
-        counts[r.category]=(counts[r.category]||0)+1;
-        let row=t.insertRow();
-        row.insertCell(0).innerText=r.date;
-        row.insertCell(1).innerText=r.systolic;
-        row.insertCell(2).innerText=r.diastolic;
-        let catCell=row.insertCell(3);
-        catCell.innerText=r.category;
-        catCell.style.color=getCategoryColor(r.category);
-      });
-      let total=userRecords.length;
-      summaryDiv.innerHTML=`
-        <b>Total Records:</b> ${total} &nbsp;
-        <b>Normal:</b> ${counts["Normal"]} &nbsp;
-        <b>Elevated:</b> ${counts["Elevated"]} &nbsp;
-        <b>Hypertension Stage 1:</b> ${counts["Hypertension Stage 1"]} &nbsp;
-        <b>Hypertension Stage 2:</b> ${counts["Hypertension Stage 2"]} &nbsp;
-        <b>Hypertensive Crisis:</b> ${counts["Hypertensive Crisis"]}`;
-    }
-    select.onchange=updateTable;
+    select.onchange = renderPublicInline;
     if(users.length>0) select.onchange();
   }
 
   function renderPublicInline(){
     let select=document.getElementById("userSelect");
-    if(select.value===currentUser) select.onchange();
+    let summaryDiv=document.getElementById("publicSummary");
+    let uname=select.value;
+    let userRecords=records[uname]||[];
+    let t=document.getElementById("publicTable");
+    t.innerHTML="<tr><th>Date</th><th>Systolic</th><th>Diastolic</th><th>Category</th></tr>";
+
+    let counts = {Normal:0, Elevated:0, "Hypertension Stage 1":0, "Hypertension Stage 2":0, "Hypertensive Crisis":0};
+    userRecords.forEach(r=>{
+      counts[r.category]=(counts[r.category]||0)+1;
+      let row=t.insertRow();
+      row.insertCell(0).innerText=r.date;
+      row.insertCell(1).innerText=r.systolic;
+      row.insertCell(2).innerText=r.diastolic;
+      let catCell=row.insertCell(3);
+      catCell.innerText=r.category;
+      catCell.style.color=getCategoryColor(r.category);
+    });
+
+    let total=userRecords.length;
+    summaryDiv.innerHTML = `
+      <b>Total Records:</b> ${total} &nbsp;
+      <b>Normal:</b> ${counts["Normal"]} &nbsp;
+      <b>Elevated:</b> ${counts["Elevated"]} &nbsp;
+      <b>Hypertension Stage 1:</b> ${counts["Hypertension Stage 1"]} &nbsp;
+      <b>Hypertension Stage 2:</b> ${counts["Hypertension Stage 2"]} &nbsp;
+      <b>Hypertensive Crisis:</b> ${counts["Hypertensive Crisis"]}`;
   }
 
-  // Initial tab
   if(!currentUser) showTab("loginSection");
-  else showTab("trackerSection");
+  else {
+    let userObj=users.find(u=>u.username===currentUser);
+    if(userObj && userObj.isAdmin) showTab("adminSection");
+    else showTab("trackerSection");
+  }
 };
 </script>
 </body>
