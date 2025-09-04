@@ -87,6 +87,13 @@ window.onload = function() {
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
   }
 
+  // --- Ensure default admin exists without overwriting existing users ---
+  if (!users.find(u => u.username === "admin")) {
+    users.push({ username: "admin", password: "admin123", blocked: false });
+    if (!records["admin"]) records["admin"] = [];
+    saveData();
+  }
+
   // --- BP Category Functions ---
   function getBPCategory(s,d){
     if(s>=180 || d>=120) return "Hypertensive Crisis";
